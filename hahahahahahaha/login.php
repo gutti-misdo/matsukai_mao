@@ -17,7 +17,7 @@
       <label for="password">パスワード</label><br>
       <input type="password" id="password" placeholder="パスワードを入力してください"><br><br>
      
-      <button type="submit" class="login-button"><form action="" method="post"></form>ログイン</button><br><br>
+      <button type="submit" class="login-button"><form action="home.php" method="post"></form>ログイン</button><br><br>
     </form>
  
     <form action="shinkisakusei.html" method="post"><a href="#" class="signup-link">アカウント新規作成</a></form>

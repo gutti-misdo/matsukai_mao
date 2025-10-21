@@ -9,9 +9,9 @@ body {
   background-color: #66cc66;
   width: 90%;
   max-width: 1200px;
-  margin: 0 auto 40px;
+  margin: 0 auto 20px;
   padding: 200px;
-  border-radius: 10px;
+  border-radius: 1px;
   text-align: center;
 }
 
