@@ -33,7 +33,7 @@
             <button type="submit" class="login-button">ログイン</button>
         </form>
 
-        <a href="#signup" class="link">アカウント新規作成</a>
+        <a href="../signup_page/signup.php" class="link">アカウント新規作成</a>
     </main>
 </body>
 
