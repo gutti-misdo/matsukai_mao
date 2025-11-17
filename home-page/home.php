@@ -33,9 +33,9 @@ $userName = $_SESSION['user_name'] ?? 'ユーザー';
             <div class="header__user">
                 ようこそ、<?php echo htmlspecialchars($userName, ENT_QUOTES, 'UTF-8'); ?>さん
             </div>
-            <button class="settings-button" aria-label="設定">
+            <a class="settings-button" href="./settings.php" aria-label="設定ページへ">
                 <span>設定</span>
-            </button>
+            </a>
         </header>
 
 

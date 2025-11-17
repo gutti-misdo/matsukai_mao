@@ -61,8 +61,15 @@ body {
   border-radius: 16px;
   padding: 6px 14px;
   font-size: 14px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   cursor: pointer;
+  text-decoration: none;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  font-weight: 600;
 }
 
 .main {
