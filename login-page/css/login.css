@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;600&display=swap");
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "M PLUS 1p", "Hiragino Kaku Gothic ProN", sans-serif;
+  background-color: #66cc66;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.container {
+  width: min(90vw, 360px);
+  margin-top: 40px;
+  text-align: center;
+}
+
+.title {
+  font-size: 28px;
+  color: #ff0000;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 22px;
+  margin: 0 0 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form label {
+  font-size: 14px;
+  text-align: left;
+}
+
+.form input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #000;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+.login-button {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.login-button:hover {
+  background: #f0f0f0;
+}
+
+.link {
+  display: inline-block;
+  margin-top: 40px;
+  font-size: 14px;
+  color: #0000ff;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
