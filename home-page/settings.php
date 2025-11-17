@@ -1,6 +1,17 @@
 <?php
 session_start();
 
+if (isset($_POST['logout'])) {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+    }
+    session_destroy();
+    header('Location: ../login-page/login.php');
+    exit;
+}
+
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../login-page/login.php');
     exit;
@@ -33,7 +44,10 @@ if (!isset($_SESSION['user_id'])) {
                 <button class="settings-menu__item" type="button">アカウント情報</button>
                 <button class="settings-menu__item" type="button">アルバイト新規登録</button>
                 <button class="settings-menu__item" type="button">アルバイト一覧</button>
-                <button class="settings-menu__item settings-menu__item--danger" type="button">ログアウト</button>
+                <form method="post" class="settings-menu__logout">
+                    <button class="settings-menu__item settings-menu__item--danger" type="submit" name="logout"
+                        value="1">ログアウト</button>
+                </form>
             </div>
         </main>
     </div>
