@@ -1,3 +1,50 @@
+<?php
+session_start();
+
+if (isset($_SESSION['user_id'])) {
+    header('Location: ../home-page/home.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($email === '' || $password === '') {
+        $error = 'メールアドレスとパスワードを入力してください。';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'メールアドレスの形式が正しくありません。';
+    } else {
+        $dsn = 'mysql:host=localhost;dbname=matsukai;charset=utf8mb4';
+        $dbUser = 'root';
+        $dbPassword = '';
+
+        try {
+            $pdo = new PDO($dsn, $dbUser, $dbPassword, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+
+            $stmt = $pdo->prepare('SELECT user_id, user_name, pass FROM user WHERE mail = :email LIMIT 1');
+            $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+            $stmt->execute();
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, $user['pass'])) {
+                $_SESSION['user_id'] = $user['user_id'];
+                $_SESSION['user_name'] = $user['user_name'];
+                header('Location: ../home-page/home.php');
+                exit;
+            } else {
+                $error = 'メールアドレスまたはパスワードが正しくありません。';
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            $error = 'データベース接続に失敗しました。';
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -13,13 +60,18 @@
         <h1 class="title">IIKANJIKANRIHYOU</h1>
         <h2 class="subtitle">ログイン</h2>
 
-        <form class="form" action="home.php" method="post">
+        <?php if (isset($error)) : ?>
+            <p class="error-message"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
+        <?php endif; ?>
+
+        <form class="form" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
             <label for="email">メールアドレス</label>
             <input
                 type="email"
                 id="email"
                 name="email"
                 placeholder="メールアドレスを入力してください"
+                value="<?php echo htmlspecialchars($email ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                 required />
 
             <label for="password">パスワード</label>

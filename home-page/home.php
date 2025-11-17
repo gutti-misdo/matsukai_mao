@@ -1,3 +1,13 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../login-page/login.php');
+    exit;
+}
+
+$userName = $_SESSION['user_name'] ?? 'ユーザー';
+?>
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -20,10 +30,14 @@
                 <span class="header__title-main">IIKANJIKANRIHYOU</span>
                 <span class="header__title-sub">iikanjikanrihyou</span>
             </div>
+            <div class="header__user">
+                ようこそ、<?php echo htmlspecialchars($userName, ENT_QUOTES, 'UTF-8'); ?>さん
+            </div>
             <button class="settings-button" aria-label="設定">
                 <span>設定</span>
             </button>
         </header>
+
 
         <main class="main">
             <section class="calendar">

@@ -77,3 +77,13 @@ body {
 .link:hover {
   text-decoration: underline;
 }
+
+.error-message {
+  margin: 0 0 20px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background-color: #ffe5e5;
+  color: #d8000c;
+  font-size: 14px;
+  border: 1px solid #d8000c;
+}

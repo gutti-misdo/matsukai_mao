@@ -36,6 +36,12 @@ body {
   gap: 4px;
 }
 
+.header__user {
+  font-size: 14px;
+  margin-top: 6px;
+  color: #fff;
+}
+
 .header__title-main {
   font-size: 26px;
   font-weight: 700;
