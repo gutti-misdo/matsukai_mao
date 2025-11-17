@@ -41,7 +41,7 @@ if (!isset($_SESSION['user_id'])) {
 
         <main class="settings-page__main" role="main">
             <div class="settings-menu">
-                <button class="settings-menu__item" type="button">アカウント情報</button>
+                <a class="settings-menu__item" href="./account-settings.php">アカウント情報</a>
                 <button class="settings-menu__item" type="button">アルバイト新規登録</button>
                 <button class="settings-menu__item" type="button">アルバイト一覧</button>
                 <form method="post" class="settings-menu__logout">
