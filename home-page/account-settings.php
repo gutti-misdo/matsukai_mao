@@ -112,7 +112,6 @@ try {
                         name="mail"
                         value="<?php echo htmlspecialchars($mail, ENT_QUOTES, 'UTF-8'); ?>"
                         required />
-␊
                     <label class="account-form__label" for="pass">パスワード変更</label>
                     <input
                         class="account-form__input"

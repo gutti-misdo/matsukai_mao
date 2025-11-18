@@ -77,6 +77,10 @@ body {
     color: #b00020;
 }
 
+.list-card__message--success {
+    color: #2e7d32;
+}
+
 .parts-list {
     list-style: none;
     margin: 0 0 32px;

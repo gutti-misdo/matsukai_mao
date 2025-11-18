@@ -10,6 +10,8 @@ require_once __DIR__ . '/../db-connect.php';
 
 $parts = [];
 $errorMessage = '';
+$successMessage = $_SESSION['parts_success_message'] ?? '';
+unset($_SESSION['parts_success_message']);
 
 try {
     $stmt = $pdo->prepare('SELECT shop_name, hourly_wage, travel_expenses FROM parts WHERE user_id = :user_id ORDER BY shop_name ASC');
@@ -45,6 +47,12 @@ try {
 
         <main class="list-card" role="main">
             <h1 class="list-card__title">アルバイト一覧</h1>
+
+            <?php if ($successMessage !== '') : ?>
+                <p class="list-card__message list-card__message--success">
+                    <?php echo htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8'); ?>
+                </p>
+            <?php endif; ?>
 
             <?php if ($errorMessage !== '') : ?>
                 <p class="list-card__message list-card__message--error">

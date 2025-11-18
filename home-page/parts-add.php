@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     if ($errorMessage === '') {
-try {
+        try {
             $stmt = $pdo->prepare('INSERT INTO parts (user_id, shop_name, hourly_wage, travel_expenses) VALUES (:user_id, :shop_name, :hourly_wage, :travel_expenses)');
             $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
             $stmt->bindValue(':shop_name', $shopName, PDO::PARAM_STR);
@@ -47,10 +47,9 @@ try {
                 $stmt->bindValue(':travel_expenses', $travelExpensesValue, PDO::PARAM_INT);
             }
             $stmt->execute();
-            $successMessage = 'アルバイト情報を登録しました。';
-            $shopName = '';
-            $hourlyWage = '';
-            $travelExpenses = '';
+            $_SESSION['parts_success_message'] = 'アルバイト情報を登録しました。';
+            header('Location: ./parts-list.php');
+            exit;
         } catch (PDOException $e) {
             http_response_code(500);
             $errorMessage = '登録に失敗しました。';
@@ -60,6 +59,7 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -69,6 +69,7 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./css/parts-add.css" />
 </head>
+
 <body>
     <div class="screen">
         <a class="back-link" href="./home.php">ホームに戻る</a>
@@ -99,4 +100,5 @@ try {
         </div>
     </div>
 </body>
+
 </html>
