@@ -1,0 +1,15 @@
+<?php
+$dsn = 'mysql:host=localhost;dbname=matsukai;charset=utf8mb4';
+$dbUser = 'root';
+$dbPassword = '';
+
+try {
+    $pdo = new PDO($dsn, $dbUser, $dbPassword, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo '<p>データベース接続に失敗しました: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</p>';
+    exit;
+}
