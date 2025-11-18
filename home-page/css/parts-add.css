@@ -69,6 +69,20 @@ form {
     gap: 18px;
 }
 
+.feedback {
+    margin: 0;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+}
+
+.feedback--success {
+    color: #0f5132;
+}
+
+.feedback--error {
+    color: #842029;
+}
+
 label {
     text-align: left;
     font-size: 0.95rem;

@@ -4,13 +4,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$name = trim($_POST['name'] ?? '');
-$email = trim($_POST['email'] ?? '');
-$password = $_POST['password'] ?? '';
-
-if ($name === '' || $email === '' || $password === '') {
+$name = trim($_POST['user_name'] ?? '');
+$mail = trim($_POST['mail'] ?? '');
+$password = $_POST['pass'] ?? '';
+if ($name === '' || $mail === '' || $password === '') {
     $error = 'すべての項目を入力してください。';
-} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+} elseif (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
     $error = 'メールアドレスの形式が正しくありません。';
 }
 
@@ -32,9 +31,9 @@ try {
 if (!isset($error)) {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     try {
-        $stmt = $pdo->prepare('INSERT INTO user (user_name, mail, pass) VALUES (:name, :email, :password)');
+        $stmt = $pdo->prepare('INSERT INTO user (user_name, mail, pass) VALUES (:name, :mail, :password)');
         $stmt->bindValue(':name', $name, PDO::PARAM_STR);
-        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+        $stmt->bindValue(':mail', $mail, PDO::PARAM_STR);
         $stmt->bindValue(':password', $hashedPassword, PDO::PARAM_STR);
         $stmt->execute();
         $success = true;

@@ -14,30 +14,27 @@
         <h2 class="subtitle">新規作成</h2>
 
         <form class="form" action="welcome.php" method="post">
-            <label for="name">名前</label>
-            <input
+            <label for="user_name">名前</label>
+            <input␊
                 type="text"
-                id="name"
-                name="name"
+                id="user_name"
+                name="user_name"
                 placeholder="名前を入力してください"
                 required />
-
-            <label for="email">メールアドレス</label>
-            <input
+            <label for="mail">メールアドレス</label>
+            <input␊
                 type="email"
-                id="email"
-                name="email"
+                id="mail"
+                name="mail"
                 placeholder="メールアドレスを入力してください"
                 required />
-
-            <label for="password">パスワード</label>
-            <input
+            <label for="pass">パスワード</label>
+            <input␊
                 type="password"
-                id="password"
-                name="password"
+                id="pass"
+                name="pass"
                 placeholder="パスワードを入力してください"
                 required />
-
             <button type="submit" class="signup-button">新規作成</button>
         </form>
 

@@ -12,7 +12,7 @@ $dbPassword = '';
 
 $userId = $_SESSION['user_id'];
 $name = '';
-$email = '';
+$mail = '';
 $successMessage = '';
 $errorMessage = '';
 
@@ -24,12 +24,12 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim($_POST['user_name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $password = trim($_POST['password'] ?? '');
+        $mail = trim($_POST['mail'] ?? '');
+        $password = trim($_POST['pass'] ?? '');
 
-        if ($name === '' || $email === '') {
+        if ($name === '' || $mail === '') {
             $errorMessage = '名前とメールアドレスを入力してください。';
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        } elseif (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
             $errorMessage = 'メールアドレスの形式が正しくありません。';
         } else {
             if ($password !== '') {
@@ -43,7 +43,7 @@ try {
             }
 
             $stmt->bindValue(':name', $name, PDO::PARAM_STR);
-            $stmt->bindValue(':mail', $email, PDO::PARAM_STR);
+            $stmt->bindValue(':mail', $mail, PDO::PARAM_STR);
             $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
             $stmt->execute();
 
@@ -57,7 +57,7 @@ try {
         }
     }
 
-    if ($name === '' || $email === '') {
+    if ($name === '' || $mail === '') {
         $stmt = $pdo->prepare('SELECT user_name, mail FROM user WHERE user_id = :id LIMIT 1');
         $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
         $stmt->execute();
@@ -65,7 +65,7 @@ try {
 
         if ($user) {
             $name = $user['user_name'];
-            $email = $user['mail'];
+            $mail = $user['mail'];
         } else {
             $errorMessage = 'ユーザー情報を取得できませんでした。';
         }
@@ -111,21 +111,21 @@ try {
                         value="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
                         required />
 
-                    <label class="account-form__label" for="email">メールアドレス</label>
+                    <label class="account-form__label" for="mail">メールアドレス</label>
                     <input
                         class="account-form__input"
                         type="email"
-                        id="email"
-                        name="email"
-                        value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>"
+                        id="mail"
+                        name="mail"
+                        value="<?php echo htmlspecialchars($mail, ENT_QUOTES, 'UTF-8'); ?>"
                         required />
-
-                    <label class="account-form__label" for="password">パスワード変更</label>
+␊
+                    <label class="account-form__label" for="pass">パスワード変更</label>
                     <input
                         class="account-form__input"
                         type="password"
-                        id="password"
-                        name="password"
+                        id="pass"
+                        name="pass"
                         placeholder="新規パスワードを入力してください" />
 
                     <button class="account-form__submit" type="submit">保存する</button>
