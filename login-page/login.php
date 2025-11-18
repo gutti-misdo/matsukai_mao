@@ -67,20 +67,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form class="form" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
             <label for="mail">メールアドレス</label>
-            <input␊
-                type="email"␊
+            <input
+                type="email"
                 id="mail"
                 name="mail"
-                placeholder="メールアドレスを入力してください"␊
+                placeholder="メールアドレスを入力してください"
                 value="<?php echo htmlspecialchars($mail ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                required />␊
-␊
+                required />
             <label for="pass">パスワード</label>
-            <input␊
-                type="password"␊
+            <input
+                type="password"
                 id="pass"
                 name="pass"
-                placeholder="パスワードを入力してください"␊
+                placeholder="パスワードを入力してください"
                 required />
 
             <button type="submit" class="login-button">ログイン</button>

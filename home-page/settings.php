@@ -43,7 +43,7 @@ if (!isset($_SESSION['user_id'])) {
             <div class="settings-menu">
                 <a class="settings-menu__item" href="./account-settings.php">アカウント情報</a>
                 <a class="settings-menu__item" href="./parts-add.php">アルバイト新規登録</a>
-                <button class="settings-menu__item" type="button">アルバイト一覧</button>
+                <a class="settings-menu__item" href="./parts-list.php">アルバイト一覧</a>
                 <form method="post" class="settings-menu__logout">
                     <button class="settings-menu__item settings-menu__item--danger" type="submit" name="logout"
                         value="1">ログアウト</button>

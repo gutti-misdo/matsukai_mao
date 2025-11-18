@@ -15,21 +15,21 @@
 
         <form class="form" action="welcome.php" method="post">
             <label for="user_name">名前</label>
-            <input␊
+            <input
                 type="text"
                 id="user_name"
                 name="user_name"
                 placeholder="名前を入力してください"
                 required />
             <label for="mail">メールアドレス</label>
-            <input␊
+            <input
                 type="email"
                 id="mail"
                 name="mail"
                 placeholder="メールアドレスを入力してください"
                 required />
             <label for="pass">パスワード</label>
-            <input␊
+            <input
                 type="password"
                 id="pass"
                 name="pass"
@@ -37,7 +37,7 @@
                 required />
             <button type="submit" class="signup-button">新規作成</button>
         </form>
-
+        <br>
         <a href="../login-page/login.php" class="link">ログインに戻る</a>
     </main>
 </body>
