@@ -17,16 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
         $error = 'メールアドレスの形式が正しくありません。';
     } else {
-        $dsn = 'mysql:host=localhost;dbname=matsukai;charset=utf8mb4';
-        $dbUser = 'root';
-        $dbPassword = '';
+        require_once __DIR__ . '/../db-connect.php';
 
         try {
-            $pdo = new PDO($dsn, $dbUser, $dbPassword, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-
             $stmt = $pdo->prepare('SELECT user_id, user_name, pass FROM user WHERE mail = :mail LIMIT 1');
             $stmt->bindValue(':mail', $mail, PDO::PARAM_STR);
             $stmt->execute();
