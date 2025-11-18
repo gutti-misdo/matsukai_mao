@@ -10,35 +10,33 @@ $dsn = 'mysql:host=localhost;dbname=matsukai;charset=utf8mb4';
 $dbUser = 'root';
 $dbPassword = '';
 
-$workplace = '';
-$wage = '';
-$transport = '';
+$shopName = '';
+$hourlyWage = '';
+$travelExpenses = '';
 $successMessage = '';
 $errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $workplace = trim($_POST['workplace'] ?? '');
-    $wageInput = trim($_POST['wage'] ?? '');
-    $transportInput = trim($_POST['transport'] ?? '');
-    $wage = $wageInput;
-    $transport = $transportInput;
+    $shopName = trim($_POST['shop_name'] ?? '');
+    $hourlyWageInput = trim($_POST['hourly_wage'] ?? '');
+    $travelExpensesInput = trim($_POST['travel_expenses'] ?? '');
+    $hourlyWage = $hourlyWageInput;
+    $travelExpenses = $travelExpensesInput;
 
-    if ($workplace === '' || $wageInput === '') {
+    if ($shopName === '' || $hourlyWageInput === '') {
         $errorMessage = '勤務先と時給を入力してください。';
     } else {
-        $wageValue = filter_var($wageInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
-        $transportValue = null;
-
-        if ($wageValue === false) {
+        $hourlyWageValue = filter_var($hourlyWageInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        $travelExpensesValue = null;
+        if ($hourlyWageValue === false) {
             $errorMessage = '時給は0以上の数値で入力してください。';
-        } elseif ($transportInput !== '') {
-            $transportValue = filter_var($transportInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
-            if ($transportValue === false) {
+        } elseif ($travelExpensesInput !== '') {
+            $travelExpensesValue = filter_var($travelExpensesInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            if ($travelExpensesValue === false) {
                 $errorMessage = '交通費は0以上の数値で入力してください。';
             }
         }
     }
-
     if ($errorMessage === '') {
         try {
             $pdo = new PDO($dsn, $dbUser, $dbPassword, [
@@ -46,23 +44,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
 
-            $stmt = $pdo->prepare('INSERT INTO parts (user_id, workplace, wage, transport) VALUES (:user_id, :workplace, :wage, :transport)');
+            $stmt = $pdo->prepare('INSERT INTO parts (user_id, shop_name, hourly_wage, travel_expenses) VALUES (:user_id, :shop_name, :hourly_wage, :travel_expenses)');
             $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-            $stmt->bindValue(':workplace', $workplace, PDO::PARAM_STR);
-            $stmt->bindValue(':wage', $wageValue, PDO::PARAM_INT);
-
-            if ($transportValue === null) {
-                $stmt->bindValue(':transport', null, PDO::PARAM_NULL);
+            $stmt->bindValue(':shop_name', $shopName, PDO::PARAM_STR);
+            $stmt->bindValue(':hourly_wage', $hourlyWageValue, PDO::PARAM_INT);
+            if ($travelExpensesValue === null) {
+                $stmt->bindValue(':travel_expenses', null, PDO::PARAM_NULL);
             } else {
-                $stmt->bindValue(':transport', $transportValue, PDO::PARAM_INT);
+                $stmt->bindValue(':travel_expenses', $travelExpensesValue, PDO::PARAM_INT);
             }
-
             $stmt->execute();
-
             $successMessage = 'アルバイト情報を登録しました。';
-            $workplace = '';
-            $wage = '';
-            $transport = '';
+            $shopName = '';
+            $hourlyWage = '';
+            $travelExpenses = '';
         } catch (PDOException $e) {
             http_response_code(500);
             $errorMessage = '登録に失敗しました。';
@@ -89,16 +84,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h1>アルバイト登録</h1>
             <form action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" method="post">
                 <div>
-                    <label for="workplace">勤務先</label>
-                    <input type="text" id="workplace" name="workplace" placeholder="勤務先を入力" value="<?php echo htmlspecialchars($workplace, ENT_QUOTES, 'UTF-8'); ?>" required />
+                    <label for="shop_name">勤務先</label>
+                    <input type="text" id="shop_name" name="shop_name" placeholder="勤務先を入力" value="<?php echo htmlspecialchars($shopName, ENT_QUOTES, 'UTF-8'); ?>" required />
                 </div>
                 <div>
-                    <label for="wage">時給</label>
-                    <input type="number" id="wage" name="wage" placeholder="例: 1200" min="0" step="50" value="<?php echo htmlspecialchars($wage, ENT_QUOTES, 'UTF-8'); ?>" required />
+                    <label for="hourly_wage">時給</label>
+                    <input type="number" id="hourly_wage" name="hourly_wage" placeholder="例: 1200" min="0" step="50" value="<?php echo htmlspecialchars($hourlyWage, ENT_QUOTES, 'UTF-8'); ?>" required />
                 </div>
                 <div>
-                    <label for="transport">交通費</label>
-                    <input type="number" id="transport" name="transport" placeholder="1日あたりの交通費" min="0" step="10" value="<?php echo htmlspecialchars($transport, ENT_QUOTES, 'UTF-8'); ?>" />
+                    <label for="travel_expenses">交通費</label>
+                    <input type="number" id="travel_expenses" name="travel_expenses" placeholder="1日あたりの交通費" min="0" step="10" value="<?php echo htmlspecialchars($travelExpenses, ENT_QUOTES, 'UTF-8'); ?>" />
                 </div>
                 <button class="submit-button" type="submit">登録</button>
                 <?php if ($successMessage !== '') : ?>
