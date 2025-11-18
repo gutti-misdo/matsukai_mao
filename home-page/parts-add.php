@@ -6,9 +6,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$dsn = 'mysql:host=localhost;dbname=matsukai;charset=utf8mb4';
-$dbUser = 'root';
-$dbPassword = '';
+require_once __DIR__ . '/../db-connect.php';
 
 $shopName = '';
 $hourlyWage = '';
@@ -39,11 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if ($errorMessage === '') {
         try {
-            $pdo = new PDO($dsn, $dbUser, $dbPassword, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-
             $stmt = $pdo->prepare('INSERT INTO parts (user_id, shop_name, hourly_wage, travel_expenses) VALUES (:user_id, :shop_name, :hourly_wage, :travel_expenses)');
             $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
             $stmt->bindValue(':shop_name', $shopName, PDO::PARAM_STR);
