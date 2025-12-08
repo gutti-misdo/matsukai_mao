@@ -264,6 +264,7 @@ main.container {
   flex-direction: column;
   gap: 4px;
   border: 1px solid transparent;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .calendar__day--outside {
@@ -278,6 +279,16 @@ main.container {
 .calendar__day--today {
   border-color: #7dff80;
   box-shadow: 0 0 0 1px #7dff80;
+}
+
+.calendar__day--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 59, 95, 0.18);
+  background: #fff5f7;
+}
+
+.calendar__day:focus-visible {
+  outline: 3px solid rgba(255, 59, 95, 0.3);
 }
 
 .calendar__events {
@@ -418,6 +429,68 @@ main.container {
   background: #ffe7e7;
   color: #d8000c;
   border: 1px solid #d8000c;
+}
+
+.planner__selected {
+  background: #f9fbf9;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.planner__selected-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.planner__selected-label {
+  font-size: 13px;
+  color: #6a6a6a;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.planner__selected-date {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.planner__selected-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.planner__selected-pill {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: #0a3c8c;
+  font-size: 13px;
+  border: 1px solid rgba(10, 60, 140, 0.18);
+}
+
+.planner__selected-pill--user {
+  background: #e8f7e8;
+  color: #0b613b;
+  border-color: rgba(11, 97, 59, 0.2);
+}
+
+.planner__selected-pill--holiday {
+  background: #ffe7e7;
+  color: #b8001a;
+  border-color: rgba(184, 0, 26, 0.2);
+}
+
+.planner__selected-empty {
+  color: #666;
+  font-size: 13px;
 }
 
 
