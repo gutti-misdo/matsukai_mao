@@ -3,10 +3,16 @@ const calendarMonth = document.getElementById("calendarMonth");
 const calendarGrid = document.getElementById("calendarGrid");
 const goTodayButton = document.getElementById("goToday");
 const navButtons = document.querySelectorAll(".calendar__nav");
+const eventForm = document.getElementById("eventForm");
+const eventTitleInput = document.getElementById("eventTitle");
+const eventDateInput = document.getElementById("eventDate");
+const eventMessage = document.getElementById("eventMessage");
+const openAddFormButton = document.getElementById("openAddForm");
 
 const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
 let holidayEvents = {};
+let userEvents = {};
 
 const formatKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(
@@ -118,9 +124,37 @@ const fetchHolidayEvents = async (year) => {
   }
 };
 
+const fetchUserEvents = async (year, monthIndex) => {
+  const monthKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+  try {
+    const response = await fetch(`./api/events.php?month=${monthKey}`);
+    if (!response.ok) {
+      throw new Error("予定の取得に失敗しました");
+    }
+    const data = await response.json();
+    userEvents = (data.events || []).reduce((acc, event) => {
+      if (!acc[event.event_date]) {
+        acc[event.event_date] = [];
+      }
+      acc[event.event_date].push({ title: event.title, eventId: event.event_id });
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error(error);
+    setMessage("予定の取得に失敗しました。時間をおいて再度お試しください。", "error");
+    userEvents = {};
+  }
+};
+
 const today = new Date();
 const initialDate = new Date(today.getFullYear(), today.getMonth(), 1);
 let activeDate = new Date(initialDate);
+
+const setMessage = (text, type = "info") => {
+  if (!eventMessage) return;
+  eventMessage.textContent = text;
+  eventMessage.className = `planner__message planner__message--${type}`;
+};
 
 const createDayCell = (date, isCurrentMonth) => {
   const wrapper = document.createElement("div");
@@ -149,6 +183,11 @@ const createDayCell = (date, isCurrentMonth) => {
   if (holidayEvents[key]) {
     events.push({ title: holidayEvents[key], type: "holiday" });
   }
+  if (userEvents[key]) {
+    userEvents[key].forEach((event) => {
+      events.push({ title: event.title, type: "user" });
+    });
+  }
 
   events.forEach((event) => {
     const pill = document.createElement("span");
@@ -167,6 +206,7 @@ const createDayCell = (date, isCurrentMonth) => {
 const renderCalendar = async () => {
   const year = activeDate.getFullYear();
   await fetchHolidayEvents(year);
+  await fetchUserEvents(year, activeDate.getMonth());
 
   const monthIndex = activeDate.getMonth();
 
@@ -179,19 +219,16 @@ const renderCalendar = async () => {
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
 
-  // Previous month days
   for (let i = startDay - 1; i >= 0; i -= 1) {
     const date = new Date(year, monthIndex - 1, daysInPrevMonth - i);
     calendarGrid.appendChild(createDayCell(date, false));
   }
 
-  // Current month days
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(year, monthIndex, day);
     calendarGrid.appendChild(createDayCell(date, true));
   }
 
-  // Next month filler days
   const filledCells = calendarGrid.children.length;
   const totalCells = Math.ceil(filledCells / 7) * 7;
   for (let i = filledCells; i < totalCells; i += 1) {
@@ -212,5 +249,49 @@ goTodayButton.addEventListener("click", () => {
   activeDate = new Date(today.getFullYear(), today.getMonth(), 1);
   renderCalendar();
 });
+
+if (eventForm && eventTitleInput && eventDateInput) {
+  eventForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const title = eventTitleInput.value.trim();
+    const eventDate = eventDateInput.value;
+
+    if (!title || !eventDate) {
+      setMessage("タイトルと日付を入力してください。", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch("./api/events.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, event_date: eventDate }),
+      });
+
+      if (!response.ok) {
+        throw new Error("保存に失敗しました");
+      }
+
+      const data = await response.json();
+      if (!userEvents[eventDate]) {
+        userEvents[eventDate] = [];
+      }
+      userEvents[eventDate].push({ title: data.title, eventId: data.event_id });
+      setMessage("予定を追加しました。", "success");
+      eventTitleInput.value = "";
+      renderCalendar();
+    } catch (error) {
+      console.error(error);
+      setMessage("予定の保存に失敗しました。入力内容を確認してください。", "error");
+    }
+  });
+}
+
+if (openAddFormButton && eventForm && eventTitleInput) {
+  openAddFormButton.addEventListener("click", () => {
+    eventTitleInput.focus();
+    eventForm.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+}
 
 renderCalendar();
