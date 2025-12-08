@@ -8,8 +8,11 @@ const eventTitleInput = document.getElementById("eventTitle");
 const eventDateInput = document.getElementById("eventDate");
 const eventMessage = document.getElementById("eventMessage");
 const openAddFormButton = document.getElementById("openAddForm");
+const selectedDateDisplay = document.getElementById("selectedDateDisplay");
+const selectedDateEvents = document.getElementById("selectedDateEvents");
 
 const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+const weekdayNames = ["日", "月", "火", "水", "木", "金", "土"];
 
 let holidayEvents = {};
 let userEvents = {};
@@ -132,13 +135,14 @@ const fetchUserEvents = async (year, monthIndex) => {
       throw new Error("予定の取得に失敗しました");
     }
     const data = await response.json();
-    userEvents = (data.events || []).reduce((acc, event) => {
+    const parsedEvents = (data.events || []).reduce((acc, event) => {
       if (!acc[event.event_date]) {
         acc[event.event_date] = [];
       }
       acc[event.event_date].push({ title: event.title, eventId: event.event_id });
       return acc;
     }, {});
+    userEvents = { ...userEvents, ...parsedEvents };
   } catch (error) {
     console.error(error);
     setMessage("予定の取得に失敗しました。時間をおいて再度お試しください。", "error");
@@ -147,8 +151,24 @@ const fetchUserEvents = async (year, monthIndex) => {
 };
 
 const today = new Date();
-const initialDate = new Date(today.getFullYear(), today.getMonth(), 1);
-let activeDate = new Date(initialDate);
+
+const getInitialSelectedDate = () => {
+  if (eventDateInput?.value) {
+    const parsed = new Date(eventDateInput.value);
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+  }
+  return today;
+};
+
+const initialSelectedDate = getInitialSelectedDate();
+let selectedDate = new Date(
+  initialSelectedDate.getFullYear(),
+  initialSelectedDate.getMonth(),
+  initialSelectedDate.getDate()
+);
+let activeDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
 
 const setMessage = (text, type = "info") => {
   if (!eventMessage) return;
@@ -156,9 +176,79 @@ const setMessage = (text, type = "info") => {
   eventMessage.className = `planner__message planner__message--${type}`;
 };
 
+const isSameDate = (left, right) =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
+
+const formatDisplayDate = (date) =>
+  `${date.getFullYear()}年${monthNames[date.getMonth()]}月${date.getDate()}日 (${weekdayNames[date.getDay()]})`;
+
+const renderSelectedDatePanel = () => {
+  if (!selectedDateDisplay || !selectedDateEvents) return;
+
+  selectedDateDisplay.textContent = formatDisplayDate(selectedDate);
+  selectedDateEvents.innerHTML = "";
+
+  const selectedKey = formatKey(selectedDate);
+  const selectedEvents = [];
+
+  if (holidayEvents[selectedKey]) {
+    selectedEvents.push({ title: holidayEvents[selectedKey], type: "holiday" });
+  }
+
+  if (userEvents[selectedKey]) {
+    userEvents[selectedKey].forEach((event) => {
+      selectedEvents.push({ title: event.title, type: "user" });
+    });
+  }
+
+  if (selectedEvents.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "planner__selected-empty";
+    empty.textContent = "まだ予定はありません。下のフォームから追加できます。";
+    selectedDateEvents.appendChild(empty);
+    return;
+  }
+
+  selectedEvents.forEach((event) => {
+    const pill = document.createElement("span");
+    pill.className = "planner__selected-pill";
+    if (event.type) {
+      pill.classList.add(`planner__selected-pill--${event.type}`);
+    }
+    pill.textContent = event.title;
+    selectedDateEvents.appendChild(pill);
+  });
+};
+
+const updateSelectedDayHighlight = (targetCell) => {
+  const currentSelected = calendarGrid.querySelector(".calendar__day--selected");
+  if (currentSelected && currentSelected !== targetCell) {
+    currentSelected.classList.remove("calendar__day--selected");
+    currentSelected.setAttribute("aria-pressed", "false");
+  }
+
+  targetCell.classList.add("calendar__day--selected");
+  targetCell.setAttribute("aria-pressed", "true");
+};
+
+const setSelectedDate = (date, targetCell) => {
+  selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  if (eventDateInput) {
+    eventDateInput.value = formatKey(selectedDate);
+  }
+  if (targetCell) {
+    updateSelectedDayHighlight(targetCell);
+  }
+  renderSelectedDatePanel();
+};
+
 const createDayCell = (date, isCurrentMonth) => {
   const wrapper = document.createElement("div");
   wrapper.className = "calendar__day";
+  wrapper.setAttribute("role", "button");
+  wrapper.tabIndex = 0;
   if (!isCurrentMonth) {
     wrapper.classList.add("calendar__day--outside");
   }
@@ -169,6 +259,13 @@ const createDayCell = (date, isCurrentMonth) => {
     date.getDate() === today.getDate()
   ) {
     wrapper.classList.add("calendar__day--today");
+  }
+
+  if (isSameDate(date, selectedDate)) {
+    wrapper.classList.add("calendar__day--selected");
+    wrapper.setAttribute("aria-pressed", "true");
+  } else {
+    wrapper.setAttribute("aria-pressed", "false");
   }
 
   const number = document.createElement("span");
@@ -200,6 +297,28 @@ const createDayCell = (date, isCurrentMonth) => {
   });
   wrapper.appendChild(eventsWrapper);
 
+  const handleSelection = () => {
+    setSelectedDate(date, wrapper);
+    if (!isCurrentMonth) {
+      activeDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      renderCalendar();
+    }
+    if (eventForm) {
+      eventForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    if (eventTitleInput) {
+      eventTitleInput.focus({ preventScroll: true });
+    }
+  };
+
+  wrapper.addEventListener("click", handleSelection);
+  wrapper.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelection();
+    }
+  });
+
   return wrapper;
 };
 
@@ -209,6 +328,16 @@ const renderCalendar = async () => {
   await fetchUserEvents(year, activeDate.getMonth());
 
   const monthIndex = activeDate.getMonth();
+
+  if (
+    selectedDate.getFullYear() !== activeDate.getFullYear() ||
+    selectedDate.getMonth() !== monthIndex
+  ) {
+    selectedDate = new Date(year, monthIndex, 1);
+    if (eventDateInput) {
+      eventDateInput.value = formatKey(selectedDate);
+    }
+  }
 
   calendarYear.textContent = year;
   calendarMonth.textContent = monthNames[monthIndex];
@@ -235,6 +364,8 @@ const renderCalendar = async () => {
     const date = new Date(year, monthIndex + 1, i - filledCells + 1);
     calendarGrid.appendChild(createDayCell(date, false));
   }
+
+  renderSelectedDatePanel();
 };
 
 navButtons.forEach((button) => {
@@ -246,7 +377,11 @@ navButtons.forEach((button) => {
 });
 
 goTodayButton.addEventListener("click", () => {
+  selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   activeDate = new Date(today.getFullYear(), today.getMonth(), 1);
+  if (eventDateInput) {
+    eventDateInput.value = formatKey(selectedDate);
+  }
   renderCalendar();
 });
 
@@ -277,9 +412,16 @@ if (eventForm && eventTitleInput && eventDateInput) {
         userEvents[eventDate] = [];
       }
       userEvents[eventDate].push({ title: data.title, eventId: data.event_id });
+
+      const submittedDate = new Date(eventDate);
+      if (!Number.isNaN(submittedDate)) {
+        selectedDate = submittedDate;
+      }
+
       setMessage("予定を追加しました。", "success");
       eventTitleInput.value = "";
       renderCalendar();
+      renderSelectedDatePanel();
     } catch (error) {
       console.error(error);
       setMessage("予定の保存に失敗しました。入力内容を確認してください。", "error");

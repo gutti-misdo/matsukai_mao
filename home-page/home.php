@@ -66,7 +66,16 @@ $today = date('Y-m-d');
 
             <section class="planner" aria-label="予定の追加">
                 <h2 class="planner__title">あなたの予定</h2>
-                <p class="planner__description">日付とタイトルを入力して自分専用のカレンダーに予定を追加できます。</p>
+                <p class="planner__description">カレンダーで日付を選択して、予定を追加・確認できます。</p>
+
+                <div class="planner__selected" id="selectedDatePanel">
+                    <div class="planner__selected-header">
+                        <div class="planner__selected-label">選択中の日付</div>
+                        <div class="planner__selected-date" id="selectedDateDisplay"></div>
+                    </div>
+                    <div class="planner__selected-events" id="selectedDateEvents" aria-live="polite"></div>
+                </div>
+
                 <div id="eventMessage" class="planner__message" role="status" aria-live="polite"></div>
                 <form id="eventForm" class="planner__form">
                     <label class="planner__label" for="eventTitle">タイトル</label>
