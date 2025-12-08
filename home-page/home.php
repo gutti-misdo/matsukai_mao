@@ -126,15 +126,28 @@ $homeJsVersion = is_file($homeJsPath) ? filemtime($homeJsPath) : time();
                         </div>
                     </div>
 
+                    <div class="planner__parttime">
+                        <label class="planner__checkbox">
+                            <input type="checkbox" id="isPartTime" name="is_part_time" />
+                            この予定はアルバイト
+                        </label>
+
+                        <label class="planner__label" for="partSelect">勤務先</label>
+                        <select id="partSelect" name="part_id" class="planner__input" disabled>
+                            <option value="">勤務先を選択してください</option>
+                        </select>
+                        <p class="planner__hint" id="partSelectHint">アルバイトを登録すると選択できます。</p>
+                    </div>
+
                     <button type="submit" class="planner__submit">予定を追加</button>
                 </form>
             </section>
         </main>
 
         <nav class="bottom-nav" aria-label="アクション">
-            <button class="bottom-nav__item">
+            <a class="bottom-nav__item" href="./payroll.php">
                 <span class="bottom-nav__label">給与計算</span>
-            </button>
+            </a>
             <button class="bottom-nav__item bottom-nav__item--primary" id="openAddForm" aria-label="予定を追加">
                 <span class="bottom-nav__plus">＋</span>
                 <span class="bottom-nav__label">追加</span>

@@ -33,7 +33,7 @@ if ($method === 'GET') {
     $endDate = date('Y-m-d', strtotime($startDate . ' +1 month'));
 
     try {
-        $stmt = $pdo->prepare('SELECT event_id, title, event_date, start_time, end_time FROM events WHERE user_id = :user_id AND event_date >= :start AND event_date < :end ORDER BY event_date, start_time IS NULL, start_time');
+        $stmt = $pdo->prepare('SELECT e.event_id, e.title, e.event_date, e.start_time, e.end_time, e.part_id, p.shop_name AS part_name FROM events e LEFT JOIN parts p ON e.part_id = p.part_id WHERE e.user_id = :user_id AND e.event_date >= :start AND e.event_date < :end ORDER BY e.event_date, e.start_time IS NULL, e.start_time');
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':start', $startDate, PDO::PARAM_STR);
         $stmt->bindValue(':end', $endDate, PDO::PARAM_STR);
@@ -58,6 +58,8 @@ if ($method === 'POST') {
     $eventDate = $input['event_date'] ?? '';
     $startTime = trim($input['start_time'] ?? '');
     $endTime = trim($input['end_time'] ?? '');
+    $isPartTime = !empty($input['is_part_time']);
+    $partIdInput = $isPartTime ? $input['part_id'] ?? null : null;
 
     if ($title === '' || $eventDate === '' || $startTime === '' || $endTime === '') {
         $respond(400, ['error' => 'タイトル・日付・開始時間・終了時間を入力してください。']);
@@ -88,13 +90,39 @@ if ($method === 'POST') {
         exit;
     }
 
+    $partId = null;
+    $partName = null;
+    if ($isPartTime) {
+        if (!is_numeric($partIdInput) || (int) $partIdInput <= 0) {
+            $respond(400, ['error' => 'アルバイトの勤務先を選択してください。']);
+            exit;
+        }
+
+        $partId = (int) $partIdInput;
+        $partStmt = $pdo->prepare('SELECT shop_name FROM parts WHERE user_id = :user_id AND part_id = :part_id LIMIT 1');
+        $partStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $partStmt->bindValue(':part_id', $partId, PDO::PARAM_INT);
+        $partStmt->execute();
+        $partName = $partStmt->fetchColumn();
+
+        if ($partName === false) {
+            $respond(400, ['error' => '選択されたアルバイトが見つかりません。']);
+            exit;
+        }
+    }
+
     try {
-        $stmt = $pdo->prepare('INSERT INTO events (user_id, title, event_date, start_time, end_time) VALUES (:user_id, :title, :event_date, :start_time, :end_time)');
+        $stmt = $pdo->prepare('INSERT INTO events (user_id, title, event_date, start_time, end_time, part_id) VALUES (:user_id, :title, :event_date, :start_time, :end_time, :part_id)');
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':title', $title, PDO::PARAM_STR);
         $stmt->bindValue(':event_date', $eventDate, PDO::PARAM_STR);
         $stmt->bindValue(':start_time', $startTime, PDO::PARAM_STR);
         $stmt->bindValue(':end_time', $endTime, PDO::PARAM_STR);
+        if ($partId === null) {
+            $stmt->bindValue(':part_id', null, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindValue(':part_id', $partId, PDO::PARAM_INT);
+        }
         $stmt->execute();
 
         $eventId = $pdo->lastInsertId();
@@ -104,6 +132,8 @@ if ($method === 'POST') {
             'event_date' => $eventDate,
             'start_time' => $startTime,
             'end_time' => $endTime,
+            'part_id' => $partId,
+            'part_name' => $partName,
         ]);
     } catch (PDOException $e) {
         error_log('POST /api/events: ' . $e->getMessage());

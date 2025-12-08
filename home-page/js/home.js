@@ -12,6 +12,9 @@ const eventMessage = document.getElementById("eventMessage");
 const openAddFormButton = document.getElementById("openAddForm");
 const selectedDateDisplay = document.getElementById("selectedDateDisplay");
 const selectedDateEvents = document.getElementById("selectedDateEvents");
+const partTimeCheckbox = document.getElementById("isPartTime");
+const partSelect = document.getElementById("partSelect");
+const partSelectHint = document.getElementById("partSelectHint");
 
 const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 const weekdayNames = ["日", "月", "火", "水", "木", "金", "土"];
@@ -20,6 +23,7 @@ const maxEventsPerDay = 2;
 let holidayEvents = {};
 let userEvents = {};
 const loadedMonths = new Set();
+let availableParts = [];
 
 const normalizeDateString = (value) => {
   if (!value || typeof value !== "string") return "";
@@ -45,6 +49,13 @@ const sortEventsByTime = (events) => {
     if (startDiff !== 0) return startDiff;
     return (a.title || "").localeCompare(b.title || "");
   });
+};
+
+const formatEventTitle = (event) => {
+  if (event.partName) {
+    return `${event.title}（${event.partName}）`;
+  }
+  return event.title;
 };
 
 const formatKey = (date) =>
@@ -178,6 +189,8 @@ const fetchUserEvents = async (year, monthIndex) => {
         eventId: event.event_id,
         startTime: normalizeTimeString(event.start_time),
         endTime: normalizeTimeString(event.end_time),
+        partId: event.part_id ?? null,
+        partName: event.part_name || "",
       });
       return acc;
     }, {});
@@ -219,6 +232,84 @@ const setMessage = (text, type = "info") => {
   eventMessage.className = `planner__message planner__message--${type}`;
 };
 
+const populatePartSelect = () => {
+  if (!partSelect) return;
+
+  partSelect.innerHTML = "";
+
+  if (!availableParts.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "アルバイトを登録すると選択できます";
+    partSelect.appendChild(option);
+    partSelect.disabled = true;
+    partSelect.required = false;
+    if (partTimeCheckbox) {
+      partTimeCheckbox.checked = false;
+      partTimeCheckbox.disabled = true;
+    }
+    if (partSelectHint) {
+      partSelectHint.textContent = "設定からアルバイトを登録してください。";
+    }
+    return;
+  }
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "勤務先を選択してください";
+  partSelect.appendChild(placeholder);
+
+  availableParts.forEach((part) => {
+    const option = document.createElement("option");
+    option.value = part.part_id;
+    option.textContent = `${part.shop_name}（時給: ${Number(part.hourly_wage).toLocaleString()}円）`;
+    partSelect.appendChild(option);
+  });
+
+  if (partSelectHint) {
+    partSelectHint.textContent = "勤務先を選択してください。";
+  }
+};
+
+const updatePartSelectAvailability = () => {
+  if (!partSelect || !partTimeCheckbox) return;
+
+  const hasParts = availableParts.length > 0;
+  partTimeCheckbox.disabled = !hasParts;
+
+  if (!hasParts) {
+    partSelect.disabled = true;
+    partSelect.required = false;
+    partSelect.value = "";
+    return;
+  }
+
+  partSelect.disabled = !partTimeCheckbox.checked;
+  partSelect.required = partTimeCheckbox.checked;
+  if (!partTimeCheckbox.checked) {
+    partSelect.value = "";
+  }
+};
+
+const fetchParts = async () => {
+  if (!partSelect) return;
+  try {
+    const response = await fetch("./api/parts.php");
+    if (!response.ok) {
+      throw new Error("アルバイト情報の取得に失敗しました");
+    }
+    const data = await response.json();
+    availableParts = data.parts || [];
+    populatePartSelect();
+    updatePartSelectAvailability();
+  } catch (error) {
+    console.error(error);
+    if (partSelectHint) {
+      partSelectHint.textContent = "アルバイト情報の取得に失敗しました。時間をおいて再度お試しください。";
+    }
+  }
+};
+
 const isSameDate = (left, right) =>
   left.getFullYear() === right.getFullYear() &&
   left.getMonth() === right.getMonth() &&
@@ -246,6 +337,7 @@ const renderSelectedDatePanel = () => {
         title: event.title,
         type: "user",
         timeLabel: buildTimeLabel(event.startTime, event.endTime),
+        partName: event.partName,
       });
     });
   }
@@ -273,7 +365,7 @@ const renderSelectedDatePanel = () => {
     }
 
     const title = document.createElement("span");
-    title.textContent = event.title;
+    title.textContent = formatEventTitle(event);
     pill.appendChild(title);
 
     selectedDateEvents.appendChild(pill);
@@ -345,6 +437,7 @@ const createDayCell = (date, isCurrentMonth) => {
         type: "user",
         startTime: event.startTime,
         timeLabel: buildTimeLabel(event.startTime, event.endTime),
+        partName: event.partName,
       });
     });
     wrapper.classList.add("calendar__day--has-events");
@@ -353,12 +446,13 @@ const createDayCell = (date, isCurrentMonth) => {
   const sortedEvents = sortEventsByTime(events);
 
   sortedEvents.slice(0, maxEventsPerDay).forEach((event) => {
+    const displayTitle = event.type === "user" ? formatEventTitle(event) : event.title;
     const pill = document.createElement("span");
     pill.className = "calendar__event";
     if (event.type) {
       pill.classList.add(`calendar__event--${event.type}`);
     }
-    pill.textContent = event.timeLabel ? `${event.timeLabel} ${event.title}` : event.title;
+    pill.textContent = event.timeLabel ? `${event.timeLabel} ${displayTitle}` : displayTitle;
     eventsWrapper.appendChild(pill);
   });
 
@@ -459,6 +553,12 @@ goTodayButton.addEventListener("click", () => {
   renderCalendar();
 });
 
+if (partTimeCheckbox) {
+  partTimeCheckbox.addEventListener("change", () => {
+    updatePartSelectAvailability();
+  });
+}
+
 if (eventForm && eventTitleInput && eventDateInput && startTimeInput && endTimeInput) {
   eventForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -466,9 +566,16 @@ if (eventForm && eventTitleInput && eventDateInput && startTimeInput && endTimeI
     const eventDate = eventDateInput.value;
     const startTime = startTimeInput.value;
     const endTime = endTimeInput.value;
+    const isPartTime = Boolean(partTimeCheckbox?.checked);
+    const partId = isPartTime && partSelect ? partSelect.value : "";
 
     if (!title || !eventDate || !startTime || !endTime) {
       setMessage("タイトル・日付・開始時間・終了時間を入力してください。", "error");
+      return;
+    }
+
+    if (isPartTime && (!partId || Number.isNaN(Number(partId)))) {
+      setMessage("アルバイトの勤務先を選択してください。", "error");
       return;
     }
 
@@ -486,6 +593,8 @@ if (eventForm && eventTitleInput && eventDateInput && startTimeInput && endTimeI
           event_date: eventDate,
           start_time: startTime,
           end_time: endTime,
+          is_part_time: isPartTime,
+          part_id: isPartTime ? Number(partId) : null,
         }),
       });
 
@@ -503,6 +612,8 @@ if (eventForm && eventTitleInput && eventDateInput && startTimeInput && endTimeI
         eventId: data.event_id,
         startTime: normalizeTimeString(data.start_time || startTime),
         endTime: normalizeTimeString(data.end_time || endTime),
+        partId: data.part_id ?? (isPartTime ? Number(partId) : null),
+        partName: data.part_name || "",
       });
       userEvents[savedDate] = sortEventsByTime(userEvents[savedDate]);
 
@@ -531,4 +642,6 @@ if (openAddFormButton && eventForm && eventTitleInput) {
   });
 }
 
+fetchParts();
+updatePartSelectAvailability();
 renderCalendar();
