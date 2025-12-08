@@ -13,6 +13,7 @@ const selectedDateEvents = document.getElementById("selectedDateEvents");
 
 const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 const weekdayNames = ["日", "月", "火", "水", "木", "金", "土"];
+const maxEventsPerDay = 2;
 
 let holidayEvents = {};
 let userEvents = {};
@@ -298,7 +299,7 @@ const createDayCell = (date, isCurrentMonth) => {
     wrapper.classList.add("calendar__day--has-events");
   }
 
-  events.forEach((event) => {
+  events.slice(0, maxEventsPerDay).forEach((event) => {
     const pill = document.createElement("span");
     pill.className = "calendar__event";
     if (event.type) {
@@ -307,6 +308,14 @@ const createDayCell = (date, isCurrentMonth) => {
     pill.textContent = event.title;
     eventsWrapper.appendChild(pill);
   });
+
+  if (events.length > maxEventsPerDay) {
+    const moreCount = events.length - maxEventsPerDay;
+    const more = document.createElement("span");
+    more.className = "calendar__event calendar__event--more";
+    more.textContent = `ほか${moreCount}件`;
+    eventsWrapper.appendChild(more);
+  }
   wrapper.appendChild(eventsWrapper);
 
   const handleSelection = () => {
