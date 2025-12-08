@@ -12,6 +12,12 @@
 3. PHP が動作する環境で `signup_page/signup.php` からアカウントを作成し、`login-page/login.php` からログインしてください。
 4. ログイン後の `home-page/home.php` から予定の追加・確認ができます。
 
+### 確認用サンプルデータ
+- `database.sql` を流すか、初回アクセス時に自動で以下のユーザーと予定が投入されます。
+  - メール: `demo@example.com`
+  - パスワード: `demo1234`
+  - 今月の予定: 「ミーティング」「請求書締め切り」「友人と食事」
+
 ## API
 - `home-page/api/events.php`
   - `GET ?month=YYYY-MM`: ログイン中のユーザーの指定月の予定を返します。
