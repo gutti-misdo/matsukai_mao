@@ -41,12 +41,25 @@ try {
             user_id INT NOT NULL,
             title VARCHAR(255) NOT NULL,
             event_date DATE NOT NULL,
+            start_time TIME NULL,
+            end_time TIME NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY uniq_user_event_date (user_id, title, event_date),
             INDEX idx_user_date (user_id, event_date),
             CONSTRAINT fk_events_user FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
     );
+
+    $columnCheckStmt = $pdo->prepare('SHOW COLUMNS FROM events LIKE :column');
+    $columnCheckStmt->execute([':column' => 'start_time']);
+    if ($columnCheckStmt->rowCount() === 0) {
+        $pdo->exec('ALTER TABLE events ADD COLUMN start_time TIME NULL AFTER event_date');
+    }
+
+    $columnCheckStmt->execute([':column' => 'end_time']);
+    if ($columnCheckStmt->rowCount() === 0) {
+        $pdo->exec('ALTER TABLE events ADD COLUMN end_time TIME NULL AFTER start_time');
+    }
 
     // 最低限のサンプルデータを投入（デモユーザーと予定）
     $pdo->beginTransaction();
@@ -72,16 +85,17 @@ try {
 
         $baseDate = new DateTime('first day of this month');
         $events = [
-            ['title' => 'ミーティング', 'offsetDays' => 14],
-            ['title' => '請求書締め切り', 'offsetDays' => 19],
-            ['title' => '友人と食事', 'offsetDays' => 24],
+            ['title' => 'ミーティング', 'offsetDays' => 14, 'startTime' => '10:00', 'endTime' => '11:00'],
+            ['title' => '請求書締め切り', 'offsetDays' => 19, 'startTime' => '09:00', 'endTime' => '09:30'],
+            ['title' => '友人と食事', 'offsetDays' => 24, 'startTime' => '19:00', 'endTime' => '21:00'],
         ];
 
         $insertEventStmt = $pdo->prepare(
             'SELECT COUNT(*) FROM events WHERE user_id = :user_id AND title = :title AND event_date = :event_date'
         );
         $createEventStmt = $pdo->prepare(
-            'INSERT INTO events (user_id, title, event_date) VALUES (:user_id, :title, :event_date)'
+            'INSERT INTO events (user_id, title, event_date, start_time, end_time)
+             VALUES (:user_id, :title, :event_date, :start_time, :end_time)'
         );
 
         foreach ($events as $event) {
@@ -100,6 +114,8 @@ try {
                     ':user_id' => $demoUserId,
                     ':title' => $event['title'],
                     ':event_date' => $eventDateString,
+                    ':start_time' => $event['startTime'],
+                    ':end_time' => $event['endTime'],
                 ]);
             }
         }
