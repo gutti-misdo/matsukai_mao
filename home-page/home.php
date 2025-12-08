@@ -67,6 +67,7 @@ $today = date('Y-m-d');
             <section class="planner" aria-label="予定の追加">
                 <h2 class="planner__title">あなたの予定</h2>
                 <p class="planner__description">カレンダーで日付を選択して、予定を追加・確認できます。</p>
+                <p class="planner__note">入力した予定はログイン中のアカウントに紐づいて保存され、再読み込みしてもカレンダーに反映されます。</p>
 
                 <div class="planner__selected" id="selectedDatePanel">
                     <div class="planner__selected-header">

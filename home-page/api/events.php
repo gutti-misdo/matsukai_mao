@@ -2,22 +2,30 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'ログインしてください。']);
+$respond = function (int $status, array $payload): void {
+    http_response_code($status);
+    echo json_encode($payload);
+};
+
+if (!isset($_SESSION['user_id']) || !is_numeric($_SESSION['user_id'])) {
+    $respond(401, ['error' => 'ログインしてください。']);
     exit;
 }
 
 require_once __DIR__ . '/../../db-connect.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-$userId = (int)($_SESSION['user_id'] ?? 0);
+$userId = (int)$_SESSION['user_id'];
+
+if ($userId <= 0) {
+    $respond(401, ['error' => 'ユーザー情報を確認してください。']);
+    exit;
+}
 
 if ($method === 'GET') {
     $month = $_GET['month'] ?? '';
     if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'month は YYYY-MM 形式で指定してください。']);
+        $respond(400, ['error' => 'month は YYYY-MM 形式で指定してください。']);
         exit;
     }
 
@@ -31,28 +39,36 @@ if ($method === 'GET') {
         $stmt->bindValue(':end', $endDate, PDO::PARAM_STR);
         $stmt->execute();
         $events = $stmt->fetchAll();
-        echo json_encode(['events' => $events]);
+        $respond(200, ['events' => $events]);
     } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['error' => '予定の取得に失敗しました。']);
+        error_log('GET /api/events: ' . $e->getMessage());
+        $respond(500, ['error' => '予定の取得に失敗しました。']);
     }
     exit;
 }
 
 if ($method === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    $raw = file_get_contents('php://input');
+    $input = json_decode($raw, true);
+    if (!is_array($input)) {
+        $respond(400, ['error' => '不正なリクエスト形式です。']);
+        exit;
+    }
     $title = trim($input['title'] ?? '');
     $eventDate = $input['event_date'] ?? '';
 
     if ($title === '' || $eventDate === '') {
-        http_response_code(400);
-        echo json_encode(['error' => 'タイトルと日付は必須です。']);
+        $respond(400, ['error' => 'タイトルと日付は必須です。']);
         exit;
     }
 
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $eventDate)) {
-        http_response_code(400);
-        echo json_encode(['error' => '日付は YYYY-MM-DD 形式で指定してください。']);
+        $respond(400, ['error' => '日付は YYYY-MM-DD 形式で指定してください。']);
+        exit;
+    }
+
+    if (mb_strlen($title) > 255) {
+        $respond(400, ['error' => 'タイトルは255文字以内で入力してください。']);
         exit;
     }
 
@@ -64,17 +80,16 @@ if ($method === 'POST') {
         $stmt->execute();
 
         $eventId = $pdo->lastInsertId();
-        echo json_encode([
+        $respond(201, [
             'event_id' => $eventId,
             'title' => $title,
             'event_date' => $eventDate,
         ]);
     } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['error' => '予定の保存に失敗しました。']);
+        error_log('POST /api/events: ' . $e->getMessage());
+        $respond(500, ['error' => '予定の保存に失敗しました。']);
     }
     exit;
 }
 
-http_response_code(405);
-echo json_encode(['error' => '許可されていないメソッドです。']);
+$respond(405, ['error' => '許可されていないメソッドです。']);
