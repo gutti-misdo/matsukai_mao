@@ -256,6 +256,7 @@ main.container {
 }
 
 .calendar__day {
+  min-width: 0;
   min-height: 86px;
   background: #fafafa;
   border-radius: 16px;
