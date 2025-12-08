@@ -8,6 +8,10 @@ if (!isset($_SESSION['user_id'])) {
 
 $userName = $_SESSION['user_name'] ?? 'ユーザー';
 $today = date('Y-m-d');
+$cssPath = __DIR__ . '/css/app.css';
+$homeJsPath = __DIR__ . '/js/home.js';
+$cssVersion = is_file($cssPath) ? filemtime($cssPath) : time();
+$homeJsVersion = is_file($homeJsPath) ? filemtime($homeJsPath) : time();
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -16,7 +20,7 @@ $today = date('Y-m-d');
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IIKANJIKANRIHYOU ホーム</title>
-    <link rel="stylesheet" href="./css/app.css" />
+    <link rel="stylesheet" href="./css/app.css?v=<?php echo $cssVersion; ?>" />
 </head>
 
 <body>
@@ -118,7 +122,7 @@ $today = date('Y-m-d');
         </nav>
     </div>
 
-    <script src="./js/home.js"></script>
+    <script src="./js/home.js?v=<?php echo $homeJsVersion; ?>"></script>
 </body>
 
 </html>
