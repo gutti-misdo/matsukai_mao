@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userName = $_SESSION['user_name'] ?? 'ユーザー';
+$today = date('Y-m-d');
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -62,13 +63,42 @@ $userName = $_SESSION['user_name'] ?? 'ユーザー';
 
                 <div class="calendar__grid" id="calendarGrid" aria-live="polite"></div>
             </section>
+
+            <section class="planner" aria-label="予定の追加">
+                <h2 class="planner__title">あなたの予定</h2>
+                <p class="planner__description">日付とタイトルを入力して自分専用のカレンダーに予定を追加できます。</p>
+                <div id="eventMessage" class="planner__message" role="status" aria-live="polite"></div>
+                <form id="eventForm" class="planner__form">
+                    <label class="planner__label" for="eventTitle">タイトル</label>
+                    <input
+                        type="text"
+                        id="eventTitle"
+                        name="title"
+                        class="planner__input"
+                        placeholder="例：10:00 ミーティング"
+                        required
+                    />
+
+                    <label class="planner__label" for="eventDate">日付</label>
+                    <input
+                        type="date"
+                        id="eventDate"
+                        name="event_date"
+                        class="planner__input"
+                        value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>"
+                        required
+                    />
+
+                    <button type="submit" class="planner__submit">予定を追加</button>
+                </form>
+            </section>
         </main>
 
         <nav class="bottom-nav" aria-label="アクション">
             <button class="bottom-nav__item">
                 <span class="bottom-nav__label">給与計算</span>
             </button>
-            <button class="bottom-nav__item bottom-nav__item--primary" aria-label="予定を追加">
+            <button class="bottom-nav__item bottom-nav__item--primary" id="openAddForm" aria-label="予定を追加">
                 <span class="bottom-nav__plus">＋</span>
                 <span class="bottom-nav__label">追加</span>
             </button>
