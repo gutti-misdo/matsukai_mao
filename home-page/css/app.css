@@ -281,6 +281,12 @@ main.container {
   box-shadow: 0 0 0 1px #7dff80;
 }
 
+.calendar__day--has-events {
+  border-color: #c6eec6;
+  box-shadow: 0 0 0 1px #c6eec6;
+  background: linear-gradient(180deg, rgba(198, 238, 198, 0.2) 0%, rgba(255, 255, 255, 0) 80%);
+}
+
 .calendar__day--selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(255, 59, 95, 0.18);
@@ -370,6 +376,16 @@ main.container {
   margin: 0;
   color: #555;
   font-size: 14px;
+}
+
+.planner__note {
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f4fbf4;
+  color: #1b6a35;
+  font-size: 13px;
+  border: 1px solid rgba(27, 106, 53, 0.16);
 }
 
 .planner__form {

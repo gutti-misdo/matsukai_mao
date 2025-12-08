@@ -16,6 +16,7 @@ const weekdayNames = ["日", "月", "火", "水", "木", "金", "土"];
 
 let holidayEvents = {};
 let userEvents = {};
+const loadedMonths = new Set();
 
 const formatKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(
@@ -129,6 +130,7 @@ const fetchHolidayEvents = async (year) => {
 
 const fetchUserEvents = async (year, monthIndex) => {
   const monthKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+  if (loadedMonths.has(monthKey)) return;
   try {
     const response = await fetch(`./api/events.php?month=${monthKey}`);
     if (!response.ok) {
@@ -143,6 +145,7 @@ const fetchUserEvents = async (year, monthIndex) => {
       return acc;
     }, {});
     userEvents = { ...userEvents, ...parsedEvents };
+    loadedMonths.add(monthKey);
   } catch (error) {
     console.error(error);
     setMessage("予定の取得に失敗しました。時間をおいて再度お試しください。", "error");
@@ -284,6 +287,7 @@ const createDayCell = (date, isCurrentMonth) => {
     userEvents[key].forEach((event) => {
       events.push({ title: event.title, type: "user" });
     });
+    wrapper.classList.add("calendar__day--has-events");
   }
 
   events.forEach((event) => {
