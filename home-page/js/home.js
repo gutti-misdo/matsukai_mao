@@ -95,8 +95,11 @@ const buildLocalHolidayEvents = (year) => {
   }, {});
 };
 
+const hasHolidayDataForYear = (events, year) =>
+  Object.keys(events).some((key) => key.startsWith(`${year}-`));
+
 const fetchHolidayEvents = async (year) => {
-  if (Object.keys(holidayEvents).length > 0) {
+  if (hasHolidayDataForYear(holidayEvents, year)) {
     return;
   }
 
@@ -107,14 +110,13 @@ const fetchHolidayEvents = async (year) => {
     }
 
     const data = await response.json();
-    holidayEvents = data;
+    holidayEvents = { ...holidayEvents, ...data };
   } catch (error) {
     console.error(error);
-    const years = [year - 1, year, year + 1];
-    holidayEvents = years.reduce(
-      (acc, currentYear) => ({ ...acc, ...buildLocalHolidayEvents(currentYear) }),
-      {}
-    );
+  }
+
+  if (!hasHolidayDataForYear(holidayEvents, year)) {
+    holidayEvents = { ...holidayEvents, ...buildLocalHolidayEvents(year) };
   }
 };
 
