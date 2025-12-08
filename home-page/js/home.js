@@ -18,6 +18,11 @@ let holidayEvents = {};
 let userEvents = {};
 const loadedMonths = new Set();
 
+const normalizeDateString = (value) => {
+  if (!value || typeof value !== "string") return "";
+  return value.trim().slice(0, 10);
+};
+
 const formatKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(
     2,
@@ -138,10 +143,13 @@ const fetchUserEvents = async (year, monthIndex) => {
     }
     const data = await response.json();
     const parsedEvents = (data.events || []).reduce((acc, event) => {
-      if (!acc[event.event_date]) {
-        acc[event.event_date] = [];
+      const eventDate = normalizeDateString(event.event_date);
+      if (!eventDate) return acc;
+
+      if (!acc[eventDate]) {
+        acc[eventDate] = [];
       }
-      acc[event.event_date].push({ title: event.title, eventId: event.event_id });
+      acc[eventDate].push({ title: event.title, eventId: event.event_id });
       return acc;
     }, {});
     userEvents = { ...userEvents, ...parsedEvents };
@@ -412,12 +420,13 @@ if (eventForm && eventTitleInput && eventDateInput) {
       }
 
       const data = await response.json();
-      if (!userEvents[eventDate]) {
-        userEvents[eventDate] = [];
+      const savedDate = normalizeDateString(data.event_date || eventDate);
+      if (!userEvents[savedDate]) {
+        userEvents[savedDate] = [];
       }
-      userEvents[eventDate].push({ title: data.title, eventId: data.event_id });
+      userEvents[savedDate].push({ title: data.title, eventId: data.event_id });
 
-      const submittedDate = new Date(eventDate);
+      const submittedDate = new Date(savedDate || eventDate);
       if (!Number.isNaN(submittedDate)) {
         selectedDate = submittedDate;
       }
