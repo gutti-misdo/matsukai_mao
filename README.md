@@ -21,4 +21,4 @@
 ## API
 - `home-page/api/events.php`
   - `GET ?month=YYYY-MM`: ログイン中のユーザーの指定月の予定を返します。
-  - `POST {"title": "タイトル", "event_date": "YYYY-MM-DD"}`: 新しい予定を追加します。
+  - `POST {"title": "タイトル", "event_date": "YYYY-MM-DD", "start_time": "HH:MM", "end_time": "HH:MM"}`: 新しい予定を追加します。

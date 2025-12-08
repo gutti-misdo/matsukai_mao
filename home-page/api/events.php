@@ -33,7 +33,7 @@ if ($method === 'GET') {
     $endDate = date('Y-m-d', strtotime($startDate . ' +1 month'));
 
     try {
-        $stmt = $pdo->prepare('SELECT event_id, title, event_date FROM events WHERE user_id = :user_id AND event_date >= :start AND event_date < :end ORDER BY event_date');
+        $stmt = $pdo->prepare('SELECT event_id, title, event_date, start_time, end_time FROM events WHERE user_id = :user_id AND event_date >= :start AND event_date < :end ORDER BY event_date, start_time IS NULL, start_time');
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':start', $startDate, PDO::PARAM_STR);
         $stmt->bindValue(':end', $endDate, PDO::PARAM_STR);
@@ -56,9 +56,11 @@ if ($method === 'POST') {
     }
     $title = trim($input['title'] ?? '');
     $eventDate = $input['event_date'] ?? '';
+    $startTime = trim($input['start_time'] ?? '');
+    $endTime = trim($input['end_time'] ?? '');
 
-    if ($title === '' || $eventDate === '') {
-        $respond(400, ['error' => 'タイトルと日付は必須です。']);
+    if ($title === '' || $eventDate === '' || $startTime === '' || $endTime === '') {
+        $respond(400, ['error' => 'タイトル・日付・開始時間・終了時間を入力してください。']);
         exit;
     }
 
@@ -72,11 +74,27 @@ if ($method === 'POST') {
         exit;
     }
 
+    $timePattern = '/^(?:[01]\d|2[0-3]):[0-5]\d$/';
+    if (!preg_match($timePattern, $startTime) || !preg_match($timePattern, $endTime)) {
+        $respond(400, ['error' => '時間は HH:MM 形式で入力してください。']);
+        exit;
+    }
+
+    $startDateTime = DateTime::createFromFormat('H:i', $startTime);
+    $endDateTime = DateTime::createFromFormat('H:i', $endTime);
+
+    if (!$startDateTime || !$endDateTime || $startDateTime >= $endDateTime) {
+        $respond(400, ['error' => '終了時間は開始時間より後に設定してください。']);
+        exit;
+    }
+
     try {
-        $stmt = $pdo->prepare('INSERT INTO events (user_id, title, event_date) VALUES (:user_id, :title, :event_date)');
+        $stmt = $pdo->prepare('INSERT INTO events (user_id, title, event_date, start_time, end_time) VALUES (:user_id, :title, :event_date, :start_time, :end_time)');
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':title', $title, PDO::PARAM_STR);
         $stmt->bindValue(':event_date', $eventDate, PDO::PARAM_STR);
+        $stmt->bindValue(':start_time', $startTime, PDO::PARAM_STR);
+        $stmt->bindValue(':end_time', $endTime, PDO::PARAM_STR);
         $stmt->execute();
 
         $eventId = $pdo->lastInsertId();
@@ -84,6 +102,8 @@ if ($method === 'POST') {
             'event_id' => $eventId,
             'title' => $title,
             'event_date' => $eventDate,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
         ]);
     } catch (PDOException $e) {
         error_log('POST /api/events: ' . $e->getMessage());

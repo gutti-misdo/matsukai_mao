@@ -103,6 +103,29 @@ $homeJsVersion = is_file($homeJsPath) ? filemtime($homeJsPath) : time();
                         required
                     />
 
+                    <div class="planner__time-row">
+                        <div class="planner__time-field">
+                            <label class="planner__label" for="startTime">開始時間</label>
+                            <input
+                                type="time"
+                                id="startTime"
+                                name="start_time"
+                                class="planner__input"
+                                required
+                            />
+                        </div>
+                        <div class="planner__time-field">
+                            <label class="planner__label" for="endTime">終了時間</label>
+                            <input
+                                type="time"
+                                id="endTime"
+                                name="end_time"
+                                class="planner__input"
+                                required
+                            />
+                        </div>
+                    </div>
+
                     <button type="submit" class="planner__submit">予定を追加</button>
                 </form>
             </section>

@@ -408,6 +408,18 @@ main.container {
   gap: 10px;
 }
 
+.planner__time-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.planner__time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .planner__label {
   font-weight: 600;
   font-size: 14px;
@@ -497,13 +509,26 @@ main.container {
 }
 
 .planner__selected-pill {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 6px 10px;
   border-radius: 999px;
   background: #eef6ff;
   color: #0a3c8c;
   font-size: 13px;
   border: 1px solid rgba(10, 60, 140, 0.18);
+}
+
+.planner__selected-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(10, 60, 140, 0.08);
+  color: inherit;
+  font-weight: 700;
 }
 
 .planner__selected-pill--user {
