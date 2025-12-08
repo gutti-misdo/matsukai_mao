@@ -6,6 +6,8 @@ const navButtons = document.querySelectorAll(".calendar__nav");
 const eventForm = document.getElementById("eventForm");
 const eventTitleInput = document.getElementById("eventTitle");
 const eventDateInput = document.getElementById("eventDate");
+const startTimeInput = document.getElementById("startTime");
+const endTimeInput = document.getElementById("endTime");
 const eventMessage = document.getElementById("eventMessage");
 const openAddFormButton = document.getElementById("openAddForm");
 const selectedDateDisplay = document.getElementById("selectedDateDisplay");
@@ -22,6 +24,27 @@ const loadedMonths = new Set();
 const normalizeDateString = (value) => {
   if (!value || typeof value !== "string") return "";
   return value.trim().slice(0, 10);
+};
+
+const normalizeTimeString = (value) => {
+  if (!value || typeof value !== "string") return "";
+  return value.trim().slice(0, 5);
+};
+
+const buildTimeLabel = (startTime, endTime) => {
+  if (startTime && endTime) return `${startTime}〜${endTime}`;
+  if (startTime) return `${startTime}〜`;
+  if (endTime) return `〜${endTime}`;
+  return "";
+};
+
+const sortEventsByTime = (events) => {
+  const fillValue = (value) => (value ? value : "99:99");
+  return [...events].sort((a, b) => {
+    const startDiff = fillValue(a.startTime).localeCompare(fillValue(b.startTime));
+    if (startDiff !== 0) return startDiff;
+    return (a.title || "").localeCompare(b.title || "");
+  });
 };
 
 const formatKey = (date) =>
@@ -150,9 +173,17 @@ const fetchUserEvents = async (year, monthIndex) => {
       if (!acc[eventDate]) {
         acc[eventDate] = [];
       }
-      acc[eventDate].push({ title: event.title, eventId: event.event_id });
+      acc[eventDate].push({
+        title: event.title,
+        eventId: event.event_id,
+        startTime: normalizeTimeString(event.start_time),
+        endTime: normalizeTimeString(event.end_time),
+      });
       return acc;
     }, {});
+    Object.keys(parsedEvents).forEach((key) => {
+      parsedEvents[key] = sortEventsByTime(parsedEvents[key]);
+    });
     userEvents = { ...userEvents, ...parsedEvents };
     loadedMonths.add(monthKey);
   } catch (error) {
@@ -211,7 +242,11 @@ const renderSelectedDatePanel = () => {
 
   if (userEvents[selectedKey]) {
     userEvents[selectedKey].forEach((event) => {
-      selectedEvents.push({ title: event.title, type: "user" });
+      selectedEvents.push({
+        title: event.title,
+        type: "user",
+        timeLabel: buildTimeLabel(event.startTime, event.endTime),
+      });
     });
   }
 
@@ -229,7 +264,18 @@ const renderSelectedDatePanel = () => {
     if (event.type) {
       pill.classList.add(`planner__selected-pill--${event.type}`);
     }
-    pill.textContent = event.title;
+
+    if (event.timeLabel) {
+      const time = document.createElement("span");
+      time.className = "planner__selected-time";
+      time.textContent = event.timeLabel;
+      pill.appendChild(time);
+    }
+
+    const title = document.createElement("span");
+    title.textContent = event.title;
+    pill.appendChild(title);
+
     selectedDateEvents.appendChild(pill);
   });
 };
@@ -290,27 +336,34 @@ const createDayCell = (date, isCurrentMonth) => {
   const key = formatKey(date);
   const events = [];
   if (holidayEvents[key]) {
-    events.push({ title: holidayEvents[key], type: "holiday" });
+    events.push({ title: holidayEvents[key], type: "holiday", startTime: "" });
   }
   if (userEvents[key]) {
     userEvents[key].forEach((event) => {
-      events.push({ title: event.title, type: "user" });
+      events.push({
+        title: event.title,
+        type: "user",
+        startTime: event.startTime,
+        timeLabel: buildTimeLabel(event.startTime, event.endTime),
+      });
     });
     wrapper.classList.add("calendar__day--has-events");
   }
 
-  events.slice(0, maxEventsPerDay).forEach((event) => {
+  const sortedEvents = sortEventsByTime(events);
+
+  sortedEvents.slice(0, maxEventsPerDay).forEach((event) => {
     const pill = document.createElement("span");
     pill.className = "calendar__event";
     if (event.type) {
       pill.classList.add(`calendar__event--${event.type}`);
     }
-    pill.textContent = event.title;
+    pill.textContent = event.timeLabel ? `${event.timeLabel} ${event.title}` : event.title;
     eventsWrapper.appendChild(pill);
   });
 
-  if (events.length > maxEventsPerDay) {
-    const moreCount = events.length - maxEventsPerDay;
+  if (sortedEvents.length > maxEventsPerDay) {
+    const moreCount = sortedEvents.length - maxEventsPerDay;
     const more = document.createElement("span");
     more.className = "calendar__event calendar__event--more";
     more.textContent = `ほか${moreCount}件`;
@@ -406,14 +459,21 @@ goTodayButton.addEventListener("click", () => {
   renderCalendar();
 });
 
-if (eventForm && eventTitleInput && eventDateInput) {
+if (eventForm && eventTitleInput && eventDateInput && startTimeInput && endTimeInput) {
   eventForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const title = eventTitleInput.value.trim();
     const eventDate = eventDateInput.value;
+    const startTime = startTimeInput.value;
+    const endTime = endTimeInput.value;
 
-    if (!title || !eventDate) {
-      setMessage("タイトルと日付を入力してください。", "error");
+    if (!title || !eventDate || !startTime || !endTime) {
+      setMessage("タイトル・日付・開始時間・終了時間を入力してください。", "error");
+      return;
+    }
+
+    if (startTime >= endTime) {
+      setMessage("終了時間は開始時間より後に設定してください。", "error");
       return;
     }
 
@@ -421,7 +481,12 @@ if (eventForm && eventTitleInput && eventDateInput) {
       const response = await fetch("./api/events.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, event_date: eventDate }),
+        body: JSON.stringify({
+          title,
+          event_date: eventDate,
+          start_time: startTime,
+          end_time: endTime,
+        }),
       });
 
       if (!response.ok) {
@@ -433,7 +498,13 @@ if (eventForm && eventTitleInput && eventDateInput) {
       if (!userEvents[savedDate]) {
         userEvents[savedDate] = [];
       }
-      userEvents[savedDate].push({ title: data.title, eventId: data.event_id });
+      userEvents[savedDate].push({
+        title: data.title,
+        eventId: data.event_id,
+        startTime: normalizeTimeString(data.start_time || startTime),
+        endTime: normalizeTimeString(data.end_time || endTime),
+      });
+      userEvents[savedDate] = sortEventsByTime(userEvents[savedDate]);
 
       const submittedDate = new Date(savedDate || eventDate);
       if (!Number.isNaN(submittedDate)) {
@@ -442,6 +513,8 @@ if (eventForm && eventTitleInput && eventDateInput) {
 
       setMessage("予定を追加しました。", "success");
       eventTitleInput.value = "";
+      startTimeInput.value = "";
+      endTimeInput.value = "";
       renderCalendar();
       renderSelectedDatePanel();
     } catch (error) {
