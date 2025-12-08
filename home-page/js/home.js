@@ -6,22 +6,121 @@ const navButtons = document.querySelectorAll(".calendar__nav");
 
 const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
-const sampleEvents = {
-  "2026-01-01": [{ title: "元日", type: "holiday" }],
-  "2026-01-13": [{ title: "成人の日", type: "holiday" }],
-  "2026-01-18": [{ title: "飲み会", type: "work" }],
-  "2026-01-31": [{ title: "給料日", type: "work" }],
-};
-
-const today = new Date();
-const initialDate = new Date(2026, 0, 1);
-let activeDate = new Date(initialDate);
+let holidayEvents = {};
 
 const formatKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(
     2,
     "0"
   )}`;
+
+const getVernalEquinox = (year) =>
+  Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+const getAutumnEquinox = (year) =>
+  Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+
+const createDate = (year, monthIndex, day) => new Date(year, monthIndex, day);
+const getNthMonday = (year, monthIndex, n) => {
+  const firstDay = createDate(year, monthIndex, 1).getDay();
+  const firstMonday = ((1 - firstDay + 7) % 7) + 1;
+  return createDate(year, monthIndex, firstMonday + 7 * (n - 1));
+};
+
+const generateBaseHolidays = (year) => {
+  const holidays = [
+    { date: createDate(year, 0, 1), name: "元日" },
+    { date: getNthMonday(year, 0, 2), name: "成人の日" },
+    { date: createDate(year, 1, 11), name: "建国記念の日" },
+    { date: createDate(year, 1, 23), name: "天皇誕生日" },
+    { date: createDate(year, 2, getVernalEquinox(year)), name: "春分の日" },
+    { date: createDate(year, 3, 29), name: "昭和の日" },
+    { date: createDate(year, 4, 3), name: "憲法記念日" },
+    { date: createDate(year, 4, 4), name: "みどりの日" },
+    { date: createDate(year, 4, 5), name: "こどもの日" },
+    { date: getNthMonday(year, 6, 3), name: "海の日" },
+    { date: createDate(year, 7, 11), name: "山の日" },
+    { date: getNthMonday(year, 8, 3), name: "敬老の日" },
+    { date: createDate(year, 8, getAutumnEquinox(year)), name: "秋分の日" },
+    { date: getNthMonday(year, 9, 2), name: "スポーツの日" },
+    { date: createDate(year, 10, 3), name: "文化の日" },
+    { date: createDate(year, 10, 23), name: "勤労感謝の日" },
+  ];
+  return holidays;
+};
+
+const addSubstituteHolidays = (holidays) => {
+  const holidayDates = new Set(holidays.map((holiday) => formatKey(holiday.date)));
+  holidays.forEach((holiday) => {
+    if (holiday.date.getDay() !== 0) return;
+
+    let substituteDate = new Date(holiday.date);
+    do {
+      substituteDate.setDate(substituteDate.getDate() + 1);
+    } while (holidayDates.has(formatKey(substituteDate)));
+
+    holidayDates.add(formatKey(substituteDate));
+    holidays.push({ date: substituteDate, name: "振替休日" });
+  });
+};
+
+const addCitizenHolidays = (holidays) => {
+  const holidayDates = new Set(holidays.map((holiday) => formatKey(holiday.date)));
+  const sorted = holidays.sort((a, b) => a.date - b.date);
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    const prev = sorted[i - 1];
+    const current = sorted[i];
+    const diff = (current.date - prev.date) / (1000 * 60 * 60 * 24);
+
+    if (diff === 2) {
+      const middleDate = new Date(prev.date);
+      middleDate.setDate(prev.date.getDate() + 1);
+      const middleKey = formatKey(middleDate);
+      if (!holidayDates.has(middleKey)) {
+        holidayDates.add(middleKey);
+        holidays.push({ date: middleDate, name: "国民の休日" });
+      }
+    }
+  }
+};
+
+const buildLocalHolidayEvents = (year) => {
+  const holidays = generateBaseHolidays(year);
+  addSubstituteHolidays(holidays);
+  addCitizenHolidays(holidays);
+
+  return holidays.reduce((acc, holiday) => {
+    acc[formatKey(holiday.date)] = holiday.name;
+    return acc;
+  }, {});
+};
+
+const fetchHolidayEvents = async (year) => {
+  if (Object.keys(holidayEvents).length > 0) {
+    return;
+  }
+
+  try {
+    const response = await fetch("https://holidays-jp.github.io/api/v1/date.json");
+    if (!response.ok) {
+      throw new Error("祝日情報の取得に失敗しました");
+    }
+
+    const data = await response.json();
+    holidayEvents = data;
+  } catch (error) {
+    console.error(error);
+    const years = [year - 1, year, year + 1];
+    holidayEvents = years.reduce(
+      (acc, currentYear) => ({ ...acc, ...buildLocalHolidayEvents(currentYear) }),
+      {}
+    );
+  }
+};
+
+const today = new Date();
+const initialDate = new Date(today.getFullYear(), today.getMonth(), 1);
+let activeDate = new Date(initialDate);
 
 const createDayCell = (date, isCurrentMonth) => {
   const wrapper = document.createElement("div");
@@ -46,7 +145,11 @@ const createDayCell = (date, isCurrentMonth) => {
   const eventsWrapper = document.createElement("div");
   eventsWrapper.className = "calendar__events";
   const key = formatKey(date);
-  const events = sampleEvents[key] || [];
+  const events = [];
+  if (holidayEvents[key]) {
+    events.push({ title: holidayEvents[key], type: "holiday" });
+  }
+
   events.forEach((event) => {
     const pill = document.createElement("span");
     pill.className = "calendar__event";
@@ -61,8 +164,10 @@ const createDayCell = (date, isCurrentMonth) => {
   return wrapper;
 };
 
-const renderCalendar = () => {
+const renderCalendar = async () => {
   const year = activeDate.getFullYear();
+  await fetchHolidayEvents(year);
+
   const monthIndex = activeDate.getMonth();
 
   calendarYear.textContent = year;
