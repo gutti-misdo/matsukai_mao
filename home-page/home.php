@@ -158,8 +158,8 @@ $homeJsVersion = is_file($homeJsPath) ? filemtime($homeJsPath) : time();
                 <span class="bottom-nav__plus">＋</span>
                 <span class="bottom-nav__label">追加</span>
             </button>
-            <button class="bottom-nav__item">
-                <span class="bottom-nav__label">予定変更</span>
+            <button class="bottom-nav__item" id="scrollToCalendarTop" aria-label="カレンダーへ移動">
+                <span class="bottom-nav__label">カレンダー</span>
             </button>
         </nav>
     </div>

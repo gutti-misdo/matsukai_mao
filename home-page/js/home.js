@@ -20,6 +20,8 @@ const addEventButton = document.getElementById("addEventButton");
 const updateEventButton = document.getElementById("updateEventButton");
 const deleteEventButton = document.getElementById("deleteEventButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
+const scrollToCalendarTopButton = document.getElementById("scrollToCalendarTop");
+const calendarSection = document.querySelector(".calendar");
 
 const monthNames = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 const weekdayNames = ["日", "月", "火", "水", "木", "金", "土"];
@@ -821,6 +823,12 @@ if (cancelEditButton) {
   cancelEditButton.addEventListener("click", () => {
     resetForm();
     setMessage("編集をキャンセルしました。", "info");
+  });
+}
+
+if (scrollToCalendarTopButton && calendarSection) {
+  scrollToCalendarTopButton.addEventListener("click", () => {
+    calendarSection.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
