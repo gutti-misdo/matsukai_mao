@@ -159,13 +159,7 @@ main.container {
 .header__title {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.header__user {
-  font-size: 14px;
-  margin-top: 6px;
-  color: #fff;
+  gap: 6px;
 }
 
 .header__title-main {
@@ -180,6 +174,13 @@ main.container {
   color: #111;
   text-transform: uppercase;
   font-weight: 500;
+}
+
+.header__welcome {
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .settings-button {
