@@ -63,7 +63,11 @@ try {
             p.hourly_wage,
             p.travel_expenses,
             COUNT(e.event_id) AS shift_count,
-            SUM(CASE WHEN e.start_time IS NOT NULL AND e.end_time IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, CONCAT(e.event_date, "", e.start_time), CONCAT(e.event_date, " ", e.end_time)) ELSE 0 END) AS total_minutes
+            SUM(CASE
+                WHEN e.start_time IS NOT NULL AND e.end_time IS NOT NULL
+                    THEN TIMESTAMPDIFF(MINUTE, CONCAT(e.event_date, " ", e.start_time), CONCAT(e.event_date, " ", e.end_time))
+                ELSE 0
+            END) AS total_minutes
         FROM events e
         INNER JOIN parts p ON e.' . $eventsPartColumn . ' = p.' . $partsIdColumn . '
         WHERE e.user_id = :user_id AND e.event_date >= :start AND e.event_date < :end
