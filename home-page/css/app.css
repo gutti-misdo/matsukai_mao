@@ -518,8 +518,6 @@ main.container {
   border-color: rgba(201, 35, 47, 0.35);
 }
 
-.planner__selected-pill {
-
 .planner__message {
   min-height: 20px;
   font-size: 14px;
