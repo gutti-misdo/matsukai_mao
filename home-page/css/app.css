@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
 :root {
-  --font-family: 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  --font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', system-ui, sans-serif;
   --bg-strong: #63c464;
   --bg-strong-2: #4fb757;
   --bg-soft: linear-gradient(180deg, #6fdd6a 0%, #51c154 100%);
@@ -629,11 +629,12 @@ main.container {
 }
 
 .settings-page__title {
-  font-family: 'Dancing Script', var(--font-family);
+  font-family: var(--font-family);
   font-size: clamp(32px, 10vw, 60px);
   color: var(--accent-2);
   letter-spacing: 2px;
   margin: 0;
+  font-weight: 700;
 }
 
 .settings-page__main {
@@ -711,10 +712,11 @@ main.container {
 
 .settings-header__logo {
   margin: 0;
-  font-family: 'Dancing Script', var(--font-family);
+  font-family: var(--font-family);
   font-size: clamp(32px, 12vw, 58px);
   color: var(--accent);
   text-align: left;
+  font-weight: 700;
 }
 
 .settings-main {
