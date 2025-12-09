@@ -83,6 +83,7 @@ $homeJsVersion = is_file($homeJsPath) ? filemtime($homeJsPath) : time();
 
                 <div id="eventMessage" class="planner__message" role="status" aria-live="polite"></div>
                 <form id="eventForm" class="planner__form">
+                    <input type="hidden" id="eventId" name="event_id" value="" />
                     <label class="planner__label" for="eventTitle">タイトル</label>
                     <input
                         type="text"
@@ -139,7 +140,14 @@ $homeJsVersion = is_file($homeJsPath) ? filemtime($homeJsPath) : time();
                         <p class="planner__hint" id="partSelectHint">アルバイトを登録すると選択できます。</p>
                     </div>
 
-                    <button type="submit" class="planner__submit">予定を追加</button>
+                    <div class="planner__actions">
+                        <button type="submit" class="planner__submit" id="addEventButton">予定を追加</button>
+                        <button type="submit" class="planner__submit planner__submit--secondary" id="updateEventButton" hidden>
+                            予定を変更
+                        </button>
+                        <button type="button" class="planner__delete" id="deleteEventButton" hidden>予定を削除</button>
+                        <button type="button" class="planner__secondary" id="cancelEditButton" hidden>編集をやめる</button>
+                    </div>
                 </form>
             </section>
         </main>

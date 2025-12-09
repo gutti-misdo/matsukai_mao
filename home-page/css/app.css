@@ -487,6 +487,39 @@ main.container {
   box-shadow: 0 8px 0 rgba(0, 0, 0, 0.12);
 }
 
+.planner__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.planner__actions button[hidden] {
+  display: none;
+}
+
+.planner__submit--secondary {
+  background: #ffffff;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.planner__secondary,
+.planner__delete {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.planner__delete {
+  color: #c9232f;
+  border-color: rgba(201, 35, 47, 0.35);
+}
+
+.planner__selected-pill {
+
 .planner__message {
   min-height: 20px;
   font-size: 14px;
@@ -553,6 +586,17 @@ main.container {
   color: #0a3c8c;
   font-size: 13px;
   border: 1px solid rgba(10, 60, 140, 0.18);
+}
+
+.planner__selected-action {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .planner__selected-time {
