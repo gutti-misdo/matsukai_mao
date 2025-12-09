@@ -168,4 +168,153 @@ if ($method === 'POST') {
     exit;
 }
 
+if ($method === 'PUT') {
+    $raw = file_get_contents('php://input');
+    $input = json_decode($raw, true);
+    if (!is_array($input)) {
+        $respond(400, ['error' => '不正なリクエスト形式です。']);
+        exit;
+    }
+
+    $eventId = isset($input['event_id']) ? (int) $input['event_id'] : 0;
+    $title = trim($input['title'] ?? '');
+    $eventDate = $input['event_date'] ?? '';
+    $startTime = trim($input['start_time'] ?? '');
+    $endTime = trim($input['end_time'] ?? '');
+    $isPartTime = !empty($input['is_part_time']);
+    $partIdInput = $isPartTime ? $input['part_id'] ?? null : null;
+
+    if ($eventId <= 0) {
+        $respond(400, ['error' => 'イベントIDが不正です。']);
+        exit;
+    }
+
+    if ($title === '' || $eventDate === '' || $startTime === '' || $endTime === '') {
+        $respond(400, ['error' => 'タイトル・日付・開始時間・終了時間を入力してください。']);
+        exit;
+    }
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $eventDate)) {
+        $respond(400, ['error' => '日付は YYYY-MM-DD 形式で指定してください。']);
+        exit;
+    }
+
+    if (mb_strlen($title) > 255) {
+        $respond(400, ['error' => 'タイトルは255文字以内で入力してください。']);
+        exit;
+    }
+
+    $timePattern = '/^(?:[01]\d|2[0-3]):[0-5]\d$/';
+    if (!preg_match($timePattern, $startTime) || !preg_match($timePattern, $endTime)) {
+        $respond(400, ['error' => '時間は HH:MM 形式で入力してください。']);
+        exit;
+    }
+
+    $startDateTime = DateTime::createFromFormat('H:i', $startTime);
+    $endDateTime = DateTime::createFromFormat('H:i', $endTime);
+
+    if (!$startDateTime || !$endDateTime || $startDateTime >= $endDateTime) {
+        $respond(400, ['error' => '終了時間は開始時間より後に設定してください。']);
+        exit;
+    }
+
+    try {
+        $existsStmt = $pdo->prepare('SELECT event_id FROM events WHERE event_id = :event_id AND user_id = :user_id LIMIT 1');
+        $existsStmt->bindValue(':event_id', $eventId, PDO::PARAM_INT);
+        $existsStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $existsStmt->execute();
+        if ($existsStmt->rowCount() === 0) {
+            $respond(404, ['error' => '予定が見つかりません。']);
+            exit;
+        }
+    } catch (PDOException $existsException) {
+        error_log('CHECK PUT /api/events: ' . $existsException->getMessage());
+        $respond(500, ['error' => '予定の確認に失敗しました。']);
+        exit;
+    }
+
+    $partId = null;
+    $partName = null;
+    if ($isPartTime) {
+        if (!is_numeric($partIdInput) || (int) $partIdInput <= 0) {
+            $respond(400, ['error' => 'アルバイトの勤務先を選択してください。']);
+            exit;
+        }
+
+        $partId = (int) $partIdInput;
+        $partStmt = $pdo->prepare("SELECT shop_name FROM parts WHERE user_id = :user_id AND {$partsIdColumn} = :part_id LIMIT 1");
+        $partStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $partStmt->bindValue(':part_id', $partId, PDO::PARAM_INT);
+        $partStmt->execute();
+        $partName = $partStmt->fetchColumn();
+
+        if ($partName === false) {
+            $respond(400, ['error' => '選択されたアルバイトが見つかりません。']);
+            exit;
+        }
+    }
+
+    try {
+        $stmt = $pdo->prepare(
+            "UPDATE events SET title = :title, event_date = :event_date, start_time = :start_time, end_time = :end_time, {$eventsPartColumn} = :part_id WHERE event_id = :event_id AND user_id = :user_id"
+        );
+        $stmt->bindValue(':title', $title, PDO::PARAM_STR);
+        $stmt->bindValue(':event_date', $eventDate, PDO::PARAM_STR);
+        $stmt->bindValue(':start_time', $startTime, PDO::PARAM_STR);
+        $stmt->bindValue(':end_time', $endTime, PDO::PARAM_STR);
+        $stmt->bindValue(':event_id', $eventId, PDO::PARAM_INT);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        if ($partId === null) {
+            $stmt->bindValue(':part_id', null, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindValue(':part_id', $partId, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        $respond(200, [
+            'event_id' => $eventId,
+            'title' => $title,
+            'event_date' => $eventDate,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'part_id' => $partId,
+            'part_name' => $partName,
+        ]);
+    } catch (PDOException $e) {
+        error_log('PUT /api/events: ' . $e->getMessage());
+        $respond(500, ['error' => '予定の更新に失敗しました。']);
+    }
+    exit;
+}
+
+if ($method === 'DELETE') {
+    $raw = file_get_contents('php://input');
+    $input = json_decode($raw, true);
+    $eventIdParam = $_GET['event_id'] ?? ($input['event_id'] ?? null);
+    $eventId = is_numeric($eventIdParam) ? (int) $eventIdParam : 0;
+
+    if ($eventId <= 0) {
+        $respond(400, ['error' => '削除する予定が指定されていません。']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare('DELETE FROM events WHERE event_id = :event_id AND user_id = :user_id');
+        $stmt->bindValue(':event_id', $eventId, PDO::PARAM_INT);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        if ($stmt->rowCount() === 0) {
+            $respond(404, ['error' => '予定が見つかりません。']);
+            exit;
+        }
+
+        $respond(200, ['message' => '予定を削除しました。']);
+    } catch (PDOException $e) {
+        error_log('DELETE /api/events: ' . $e->getMessage());
+        $respond(500, ['error' => '予定の削除に失敗しました。']);
+    }
+    exit;
+}
+
 $respond(405, ['error' => '許可されていないメソッドです。']);
