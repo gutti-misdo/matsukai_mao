@@ -28,7 +28,11 @@ if ($method !== 'GET') {
 }
 
 try {
-    $stmt = $pdo->prepare('SELECT part_id, shop_name, hourly_wage, travel_expenses FROM parts WHERE user_id = :user_id ORDER BY shop_name ASC');
+    $columnCheckStmt = $pdo->prepare("SHOW COLUMNS FROM parts LIKE 'parts_id'");
+    $columnCheckStmt->execute();
+    $partIdColumn = $columnCheckStmt->rowCount() > 0 ? 'parts_id' : 'part_id';
+
+    $stmt = $pdo->prepare("SELECT {$partIdColumn} AS part_id, shop_name, hourly_wage, travel_expenses FROM parts WHERE user_id = :user_id ORDER BY shop_name ASC");
     $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
     $stmt->execute();
     $parts = $stmt->fetchAll();

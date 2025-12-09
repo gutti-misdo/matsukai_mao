@@ -22,6 +22,25 @@ if ($userId <= 0) {
     exit;
 }
 
+$partsIdColumn = 'part_id';
+$eventsPartColumn = 'part_id';
+
+try {
+    $partsColumnCheck = $pdo->prepare("SHOW COLUMNS FROM parts LIKE 'parts_id'");
+    $partsColumnCheck->execute();
+    if ($partsColumnCheck->rowCount() > 0) {
+        $partsIdColumn = 'parts_id';
+    }
+
+    $eventsColumnCheck = $pdo->prepare("SHOW COLUMNS FROM events LIKE 'parts_id'");
+    $eventsColumnCheck->execute();
+    if ($eventsColumnCheck->rowCount() > 0) {
+        $eventsPartColumn = 'parts_id';
+    }
+} catch (PDOException $columnException) {
+    error_log('COLUMN CHECK /api/payroll: ' . $columnException->getMessage());
+}
+
 if ($method !== 'GET') {
     $respond(405, ['error' => '許可されていないメソッドです。']);
     exit;
@@ -38,17 +57,17 @@ $endDate = date('Y-m-d', strtotime($startDate . ' +1 month'));
 
 try {
     $stmt = $pdo->prepare(
-        'SELECT 
-            p.part_id,
+        'SELECT
+            p.' . $partsIdColumn . ' AS part_id,
             p.shop_name,
             p.hourly_wage,
             p.travel_expenses,
             COUNT(e.event_id) AS shift_count,
-            SUM(CASE WHEN e.start_time IS NOT NULL AND e.end_time IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, CONCAT(e.event_date, " ", e.start_time), CONCAT(e.event_date, " ", e.end_time)) ELSE 0 END) AS total_minutes
+            SUM(CASE WHEN e.start_time IS NOT NULL AND e.end_time IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, CONCAT(e.event_date, "", e.start_time), CONCAT(e.event_date, " ", e.end_time)) ELSE 0 END) AS total_minutes
         FROM events e
-        INNER JOIN parts p ON e.part_id = p.part_id
+        INNER JOIN parts p ON e.' . $eventsPartColumn . ' = p.' . $partsIdColumn . '
         WHERE e.user_id = :user_id AND e.event_date >= :start AND e.event_date < :end
-        GROUP BY p.part_id, p.shop_name, p.hourly_wage, p.travel_expenses
+        GROUP BY p.' . $partsIdColumn . ', p.shop_name, p.hourly_wage, p.travel_expenses
         ORDER BY p.shop_name'
     );
     $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);

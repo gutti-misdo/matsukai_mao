@@ -22,6 +22,25 @@ if ($userId <= 0) {
     exit;
 }
 
+$partsIdColumn = 'part_id';
+$eventsPartColumn = 'part_id';
+
+try {
+    $partsColumnCheck = $pdo->prepare("SHOW COLUMNS FROM parts LIKE 'parts_id'");
+    $partsColumnCheck->execute();
+    if ($partsColumnCheck->rowCount() > 0) {
+        $partsIdColumn = 'parts_id';
+    }
+
+    $eventsColumnCheck = $pdo->prepare("SHOW COLUMNS FROM events LIKE 'parts_id'");
+    $eventsColumnCheck->execute();
+    if ($eventsColumnCheck->rowCount() > 0) {
+        $eventsPartColumn = 'parts_id';
+    }
+} catch (PDOException $columnException) {
+    error_log('COLUMN CHECK /api/events: ' . $columnException->getMessage());
+}
+
 if ($method === 'GET') {
     $month = $_GET['month'] ?? '';
     if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
@@ -33,7 +52,12 @@ if ($method === 'GET') {
     $endDate = date('Y-m-d', strtotime($startDate . ' +1 month'));
 
     try {
-        $stmt = $pdo->prepare('SELECT e.event_id, e.title, e.event_date, e.start_time, e.end_time, e.part_id, p.shop_name AS part_name FROM events e LEFT JOIN parts p ON e.part_id = p.part_id WHERE e.user_id = :user_id AND e.event_date >= :start AND e.event_date < :end ORDER BY e.event_date, e.start_time IS NULL, e.start_time');
+        $stmt = $pdo->prepare(
+            "SELECT e.event_id, e.title, e.event_date, e.start_time, e.end_time, e.{$eventsPartColumn} AS part_id, p.shop_name AS part_name
+             FROM events e LEFT JOIN parts p ON e.{$eventsPartColumn} = p.{$partsIdColumn}
+             WHERE e.user_id = :user_id AND e.event_date >= :start AND e.event_date < :end
+             ORDER BY e.event_date, e.start_time IS NULL, e.start_time"
+        );
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':start', $startDate, PDO::PARAM_STR);
         $stmt->bindValue(':end', $endDate, PDO::PARAM_STR);
@@ -99,7 +123,7 @@ if ($method === 'POST') {
         }
 
         $partId = (int) $partIdInput;
-        $partStmt = $pdo->prepare('SELECT shop_name FROM parts WHERE user_id = :user_id AND part_id = :part_id LIMIT 1');
+        $partStmt = $pdo->prepare("SELECT shop_name FROM parts WHERE user_id = :user_id AND {$partsIdColumn} = :part_id LIMIT 1");
         $partStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $partStmt->bindValue(':part_id', $partId, PDO::PARAM_INT);
         $partStmt->execute();
@@ -112,7 +136,9 @@ if ($method === 'POST') {
     }
 
     try {
-        $stmt = $pdo->prepare('INSERT INTO events (user_id, title, event_date, start_time, end_time, part_id) VALUES (:user_id, :title, :event_date, :start_time, :end_time, :part_id)');
+        $stmt = $pdo->prepare(
+            "INSERT INTO events (user_id, title, event_date, start_time, end_time, {$eventsPartColumn}) VALUES (:user_id, :title, :event_date, :start_time, :end_time, :part_id)"
+        );
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':title', $title, PDO::PARAM_STR);
         $stmt->bindValue(':event_date', $eventDate, PDO::PARAM_STR);

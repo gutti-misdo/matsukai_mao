@@ -37,7 +37,7 @@ try {
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS parts (
-            part_id INT AUTO_INCREMENT PRIMARY KEY,
+            parts_id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             shop_name VARCHAR(255) NOT NULL,
             hourly_wage INT NOT NULL,
@@ -56,14 +56,18 @@ try {
             event_date DATE NOT NULL,
             start_time TIME NULL,
             end_time TIME NULL,
-            part_id INT NULL,
+            parts_id INT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY uniq_user_event_date (user_id, title, event_date),
             INDEX idx_user_date (user_id, event_date),
             CONSTRAINT fk_events_user FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
-            CONSTRAINT fk_events_part FOREIGN KEY (part_id) REFERENCES parts(part_id) ON DELETE SET NULL
+            CONSTRAINT fk_events_part FOREIGN KEY (parts_id) REFERENCES parts(parts_id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
     );
+
+    $partsIdCheckStmt = $pdo->prepare('SHOW COLUMNS FROM parts LIKE :column');
+    $partsIdCheckStmt->execute([':column' => 'parts_id']);
+    $partsIdColumn = $partsIdCheckStmt->rowCount() > 0 ? 'parts_id' : 'part_id';
 
     $columnCheckStmt = $pdo->prepare('SHOW COLUMNS FROM events LIKE :column');
     $columnCheckStmt->execute([':column' => 'start_time']);
@@ -76,12 +80,29 @@ try {
         $pdo->exec('ALTER TABLE events ADD COLUMN end_time TIME NULL AFTER start_time');
     }
 
+    $columnCheckStmt->execute([':column' => 'parts_id']);
+    $hasPartsId = $columnCheckStmt->rowCount() > 0;
+
     $columnCheckStmt->execute([':column' => 'part_id']);
-    if ($columnCheckStmt->rowCount() === 0) {
-        $pdo->exec('ALTER TABLE events ADD COLUMN part_id INT NULL AFTER end_time');
-        $pdo->exec(
-            'ALTER TABLE events ADD CONSTRAINT fk_events_part FOREIGN KEY (part_id) REFERENCES parts(part_id) ON DELETE SET NULL'
-        );
+    $hasPartId = $columnCheckStmt->rowCount() > 0;
+
+    $eventsPartColumn = $hasPartsId ? 'parts_id' : ($hasPartId ? 'part_id' : 'parts_id');
+
+    if (!$hasPartsId && !$hasPartId) {
+        $pdo->exec('ALTER TABLE events ADD COLUMN parts_id INT NULL AFTER end_time');
+        $eventsPartColumn = 'parts_id';
+    }
+
+    if ($eventsPartColumn === 'parts_id') {
+        try {
+            $pdo->exec(
+                "ALTER TABLE events ADD CONSTRAINT fk_events_part FOREIGN KEY (parts_id) REFERENCES parts({$partsIdColumn}) ON DELETE SET NULL"
+            );
+        } catch (PDOException $e) {
+            if (strpos($e->getMessage(), 'Duplicate') === false) {
+                throw $e;
+            }
+        }
     }
 
     // 最低限のサンプルデータを投入（デモユーザーと予定）
@@ -119,7 +140,7 @@ try {
         ];
 
         $existingPartsStmt = $pdo->prepare(
-            'SELECT part_id FROM parts WHERE user_id = :user_id AND shop_name = :shop_name LIMIT 1'
+            "SELECT {$partsIdColumn} FROM parts WHERE user_id = :user_id AND shop_name = :shop_name LIMIT 1"
         );
 
         $insertPartStmt = $pdo->prepare(
@@ -144,15 +165,15 @@ try {
         }
 
         $partLookupStmt = $pdo->prepare(
-            'SELECT part_id FROM parts WHERE user_id = :user_id AND shop_name = :shop_name LIMIT 1'
+            "SELECT {$partsIdColumn} FROM parts WHERE user_id = :user_id AND shop_name = :shop_name LIMIT 1"
         );
 
         $insertEventStmt = $pdo->prepare(
             'SELECT COUNT(*) FROM events WHERE user_id = :user_id AND title = :title AND event_date = :event_date'
         );
         $createEventStmt = $pdo->prepare(
-            'INSERT INTO events (user_id, title, event_date, start_time, end_time, part_id)
-             VALUES (:user_id, :title, :event_date, :start_time, :end_time, :part_id)'
+            "INSERT INTO events (user_id, title, event_date, start_time, end_time, {$eventsPartColumn})
+             VALUES (:user_id, :title, :event_date, :start_time, :end_time, :part_id)"
         );
 
         foreach ($events as $event) {
