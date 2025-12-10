@@ -35,9 +35,9 @@ if (!isset($error)) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>新規作成 完了</title>
-    <link rel="stylesheet" href="./css/signup.css" />
+    <link rel="stylesheet" href="../home-page/css/app.css" />
 </head>
-<body>
+<body class="auth-page">
     <main class="container">
         <h1 class="title">IIKANJIKANRIHYOU</h1>
         <h2 class="subtitle">新規作成</h2>

@@ -46,10 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IIKANJIKANRIHYOU ログイン</title>
-    <link rel="stylesheet" href="./css/login.css" />
+    <link rel="stylesheet" href="../home-page/css/app.css" />
 </head>
 
-<body>
+<body class="auth-page">
     <main class="container">
         <h1 class="title">IIKANJIKANRIHYOU</h1>
         <h2 class="subtitle">ログイン</h2>
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 placeholder="パスワードを入力してください"
                 required />
 
-            <button type="submit" class="login-button">ログイン</button>
+            <button type="submit" class="auth-button">ログイン</button>
         </form>
 
         <a href="../signup_page/signup.php" class="link">アカウント新規作成</a>
