@@ -28,8 +28,6 @@ $homeJsVersion = is_file($homeJsPath) ? filemtime($homeJsPath) : time();
         <header class="header">
             <div class="header__title">
                 <span class="header__title-main">IIKANJIKANRIHYOU</span>
-                <span class="header__title-sub">iikanjikanrihyou</span>
-                <span class="header__welcome">ようこそ、<?php echo htmlspecialchars($userName, ENT_QUOTES, 'UTF-8'); ?>さん</span>
             </div>
             <a class="settings-button" href="./settings.php" aria-label="設定ページへ">
                 <span>設定</span>
