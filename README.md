@@ -2,6 +2,19 @@
 
 シンプルなカレンダー管理アプリです。ユーザーごとにログインし、自分専用の予定を登録・閲覧できます。
 
+## システム概要図
+```mermaid
+flowchart LR
+    user[利用者]
+    browser[ブラウザ<br/>HTML/CSS/JavaScript]
+    app[PHPアプリケーション<br/>login-page/signup_page/home-page]
+    db[(MySQLデータベース<br/>matsukai.user / matsukai.events)]
+
+    user --> browser
+    browser -->|HTTP/HTTPS| app
+    app -->|SQL| db
+```
+
 ## セットアップ
 1. MySQL でデータベースとテーブルを作成します。
    ```sql
